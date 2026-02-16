@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Senin istediğin yeşil: rgb(23, 186, 76) -> HSL karşılığı */
+    --primary: 140 78% 41%;
+    --primary-foreground: 0 0% 100%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+  }
+}
+
+/* Tüm metinlerin varsayılan olarak siyah olmasını garanti edelim */
+body {
+  @apply bg-white text-black antialiased;
+}
