@@ -439,6 +439,13 @@ export default function ProductDetail() {
           </div>
 
           <div className="flex flex-col gap-4 pt-2">
+            <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl p-4 text-center">
+              <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">Stok ve Fiyat Bilgisi İçin</p>
+              <p className="text-2xl font-black text-[#17BA4C] animate-flash">
+                WHATSAPP: 0552 669 23 32
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">Stok Sorunuz</p>
+            </div>
             <Button 
               size="lg" 
               className="w-full h-14 text-lg bg-[#17BA4C] hover:bg-[#14a041] text-white shadow-lg shadow-[#17BA4C]/20 transition-all hover:scale-[1.02]"

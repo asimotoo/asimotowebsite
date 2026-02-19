@@ -25,6 +25,8 @@ import Brands from "@/pages/Brands";
 import AuthPage from "@/pages/AuthPage";
 import Cart from "@/pages/Cart";
 import NewArrivals from "@/pages/NewArrivals";
+import Motorcycles from "@/pages/Motorcycles";
+import MotorcycleDetail from "@/pages/MotorcycleDetail";
 
 function Router() {
   return (
@@ -36,6 +38,8 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/products" component={Products} />
           <Route path="/new-arrivals" component={NewArrivals} />
+          <Route path="/motorcycles" component={Motorcycles} />
+          <Route path="/motorcycles/:id" component={MotorcycleDetail} />
           <Route path="/products/:id" component={ProductDetail} />
           <Route path="/blog" component={Blog} />
           <Route path="/blog/:id" component={BlogDetail} />

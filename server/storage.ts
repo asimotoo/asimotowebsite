@@ -4,8 +4,9 @@ import {
   type User, type UpsertUser,
   type Category, type InsertCategory,
   type Product, type InsertProduct,
+  type Motorcycle, type InsertMotorcycle,
   type Message, type InsertMessage,
-  favorites // Added favorites
+  favorites, motorcycles, insertMotorcycleSchema // Added insertMotorcycleSchema
 } from "@shared/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { authStorage, type IAuthStorage } from "./replit_integrations/auth/storage"; // Import auth storage
@@ -31,6 +32,13 @@ export interface IStorage extends IAuthStorage {
   // Messages
   createMessage(message: InsertMessage): Promise<Message>;
   getMessages(): Promise<Message[]>;
+
+  // Motorcycles
+  getMotorcycles(filters?: any): Promise<Motorcycle[]>;
+  getMotorcycle(id: number): Promise<Motorcycle | undefined>;
+  createMotorcycle(motorcycle: InsertMotorcycle): Promise<Motorcycle>;
+  deleteMotorcycle(id: number): Promise<void>;
+  updateMotorcycle(id: number, motorcycle: Partial<InsertMotorcycle>): Promise<Motorcycle | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -161,6 +169,58 @@ export class DatabaseStorage implements IStorage {
 
   async getMessages(): Promise<Message[]> {
     return await db.select().from(messages).orderBy(desc(messages.createdAt));
+  }
+
+  // Motorcycles
+  async getMotorcycles(filters?: any): Promise<Motorcycle[]> {
+    let query = db.select().from(motorcycles);
+    const conditions = [];
+
+    if (filters) {
+      if (filters.brand) conditions.push(eq(motorcycles.brand, filters.brand));
+      if (filters.type) conditions.push(eq(motorcycles.type, filters.type));
+      if (filters.minPrice) conditions.push(sql`${motorcycles.price} >= ${filters.minPrice}`);
+      if (filters.maxPrice) conditions.push(sql`${motorcycles.price} <= ${filters.maxPrice}`);
+      if (filters.minYear) conditions.push(sql`${motorcycles.year} >= ${filters.minYear}`);
+      if (filters.maxYear) conditions.push(sql`${motorcycles.year} <= ${filters.maxYear}`);
+      if (filters.minKm) conditions.push(sql`${motorcycles.km} >= ${filters.minKm}`);
+      if (filters.maxKm) conditions.push(sql`${motorcycles.km} <= ${filters.maxKm}`);
+      if (filters.city) conditions.push(eq(motorcycles.city, filters.city));
+      // Add more filters as needed
+    }
+
+    if (conditions.length > 0) {
+      // @ts-ignore
+      query = query.where(sql.join(conditions, sql` AND `));
+    }
+    
+    // Default sort by newest
+    // @ts-ignore
+    query = query.orderBy(desc(motorcycles.id));
+
+    return await query;
+  }
+
+  async getMotorcycle(id: number): Promise<Motorcycle | undefined> {
+    const [moto] = await db.select().from(motorcycles).where(eq(motorcycles.id, id));
+    return moto;
+  }
+
+  async createMotorcycle(insertMotorcycle: InsertMotorcycle): Promise<Motorcycle> {
+    const [moto] = await db.insert(motorcycles).values(insertMotorcycle).returning();
+    return moto;
+  }
+
+  async deleteMotorcycle(id: number): Promise<void> {
+    await db.delete(motorcycles).where(eq(motorcycles.id, id));
+  }
+
+  async updateMotorcycle(id: number, insertMotorcycle: Partial<InsertMotorcycle>): Promise<Motorcycle | undefined> {
+    const [moto] = await db.update(motorcycles)
+      .set(insertMotorcycle)
+      .where(eq(motorcycles.id, id))
+      .returning();
+    return moto;
   }
 }
 

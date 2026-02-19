@@ -20,7 +20,7 @@ import { type Message } from "@shared/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { Check, Mail, Package, MessageSquare, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Check, Mail, Package, MessageSquare, ChevronsUpDown, Trash2, Bike } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +55,22 @@ export const productFormSchema = z.object({
   isFeatured: z.boolean().default(false),
 });
 
+export const motorcycleFormSchema = z.object({
+  brand: z.string().min(1, "Marka zorunludur"),
+  model: z.string().min(1, "Model zorunludur"),
+  price: z.coerce.number().min(0, "Geçerli bir fiyat giriniz"),
+  city: z.string().min(1, "Şehir zorunludur"),
+  district: z.string().min(1, "İlçe zorunludur"),
+  neighborhood: z.string().min(1, "Mahalle zorunludur"),
+  type: z.string().min(1, "Motosiklet tipi zorunludur"),
+  year: z.coerce.number().min(1900, "Geçerli bir yıl giriniz"),
+  km: z.coerce.number().min(0),
+  engineVolume: z.string().min(1, "Motor hacmi zorunludur"),
+  color: z.string().min(1, "Renk zorunludur"),
+  heavyDamage: z.boolean().default(false),
+  description: z.string().min(1, "Açıklama zorunludur"),
+});
+
 export default function Admin() {
   const [_, setLocation] = useLocation();
   const { user, isLoading } = useAuth();
@@ -86,6 +102,25 @@ export default function Admin() {
       model: "",
       year: "", 
       isFeatured: false,
+    },
+  });
+
+  const motoForm = useForm({
+    resolver: zodResolver(motorcycleFormSchema),
+    defaultValues: {
+      brand: "",
+      model: "",
+      price: "",
+      city: "",
+      district: "",
+      neighborhood: "",
+      type: "",
+      year: "",
+      km: "",
+      engineVolume: "",
+      color: "",
+      heavyDamage: false,
+      description: "",
     },
   });
 
@@ -139,6 +174,70 @@ export default function Admin() {
     },
   });
 
+  const createMotoMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const formData = new FormData();
+      formData.append("brand", data.brand);
+      formData.append("model", data.model);
+      formData.append("price", Math.round(data.price * 100).toString());
+      formData.append("city", data.city);
+      formData.append("district", data.district);
+      formData.append("neighborhood", data.neighborhood);
+      formData.append("type", data.type);
+      formData.append("year", data.year.toString());
+      formData.append("km", data.km.toString());
+      formData.append("engineVolume", data.engineVolume);
+      formData.append("color", data.color);
+      formData.append("heavyDamage", data.heavyDamage.toString());
+      formData.append("description", data.description);
+      
+      if (selectedFiles.length > 0) {
+        selectedFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+      }
+
+      const res = await fetch("/api/motorcycles", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to create motorcycle listing");
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Başarılı",
+        description: "Motosiklet ilanı başarıyla oluşturuldu",
+      });
+      motoForm.reset();
+      setSelectedFiles([]);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onMotoSubmit = (data: any) => {
+    if (selectedFiles.length === 0) {
+      toast({
+        title: "Görsel Gerekli",
+        description: "Lütfen en az bir görsel seçin",
+        variant: "destructive",
+      });
+      return;
+    }
+    createMotoMutation.mutate(data);
+  };
+
   const onSubmit = (data: any) => {
     if (selectedFiles.length === 0) {
       toast({
@@ -190,7 +289,7 @@ export default function Admin() {
       <h1 className="text-4xl font-display font-bold mb-8 text-black dark:text-white">Admin Panel</h1>
       
       <Tabs defaultValue="messages" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-[600px] mb-8 bg-gray-100 dark:bg-slate-800">
+        <TabsList className="grid w-full grid-cols-4 max-w-[800px] mb-8 bg-gray-100 dark:bg-slate-800">
           <TabsTrigger value="messages" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-black dark:data-[state=active]:text-white dark:text-gray-400">
             <MessageSquare className="w-4 h-4" />
             Mesajlar
@@ -198,6 +297,10 @@ export default function Admin() {
           <TabsTrigger value="products" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-black dark:data-[state=active]:text-white dark:text-gray-400">
              <Package className="w-4 h-4" />
              Ürün Ekle
+          </TabsTrigger>
+          <TabsTrigger value="motorcycles" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-black dark:data-[state=active]:text-white dark:text-gray-400">
+             <Bike className="w-4 h-4" />
+             Motosiklet Ekle
           </TabsTrigger>
           <TabsTrigger value="products-list" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-black dark:data-[state=active]:text-white dark:text-gray-400">
              <Package className="w-4 h-4" />
@@ -407,6 +510,158 @@ export default function Admin() {
                 <Button type="submit" className="w-full" disabled={createProductMutation.isPending}>
                   {createProductMutation.isPending ? "Oluşturuluyor..." : "Ürünü Oluştur"}
                 </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="motorcycles">
+          <Card className="max-w-2xl bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-2xl font-display text-black dark:text-white">Yeni Motosiklet Ekle</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={motoForm.handleSubmit(onMotoSubmit, (errors) => {
+                toast({
+                  title: "Hata",
+                  description: "Lütfen zorunlu alanları doldurunuz.",
+                  variant: "destructive",
+                });
+                console.error("Moto Form errors", errors);
+              })} className="space-y-6">
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-black dark:text-gray-200">Marka</Label>
+                    <Select onValueChange={(val) => motoForm.setValue("brand", val)}>
+                       <SelectTrigger className="bg-white dark:bg-slate-900 text-black dark:text-white">
+                         <SelectValue placeholder="Marka Seçin" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {brands.map((brand) => (
+                           <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                         ))}
+                       </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-black dark:text-gray-200">Model</Label>
+                    <Input {...motoForm.register("model")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-black dark:text-gray-200">Fiyat (TL)</Label>
+                    <Input type="number" {...motoForm.register("price")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-black dark:text-gray-200">Tip</Label>
+                    <Select onValueChange={(val) => motoForm.setValue("type", val)}>
+                       <SelectTrigger className="bg-white dark:bg-slate-900 text-black dark:text-white">
+                         <SelectValue placeholder="Tip Seçin" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="SuperSport">SuperSport</SelectItem>
+                         <SelectItem value="Naked">Naked</SelectItem>
+                         <SelectItem value="Chopper">Chopper</SelectItem>
+                         <SelectItem value="Touring">Touring</SelectItem>
+                         <SelectItem value="Enduro">Enduro</SelectItem>
+                         <SelectItem value="Scooter">Scooter</SelectItem>
+                         <SelectItem value="Cross">Cross</SelectItem>
+                       </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                   <div className="space-y-2">
+                     <Label className="text-black dark:text-gray-200">Şehir</Label>
+                     <Input {...motoForm.register("city")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                   </div>
+                   <div className="space-y-2">
+                     <Label className="text-black dark:text-gray-200">İlçe</Label>
+                     <Input {...motoForm.register("district")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                   </div>
+                   <div className="space-y-2">
+                     <Label className="text-black dark:text-gray-200">Mahalle</Label>
+                     <Input {...motoForm.register("neighborhood")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                   <div className="space-y-2">
+                     <Label className="text-black dark:text-gray-200">Yıl</Label>
+                     <Input type="number" {...motoForm.register("year")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                   </div>
+                   <div className="space-y-2">
+                    <Label className="text-black dark:text-gray-200">KM</Label>
+                    <Input type="number" {...motoForm.register("km")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                   </div>
+                   <div className="space-y-2">
+                    <Label className="text-black dark:text-gray-200">Motor Hacmi</Label>
+                    <Input placeholder="örn. 250 cc" {...motoForm.register("engineVolume")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                   </div>
+                </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <Label className="text-black dark:text-gray-200">Renk</Label>
+                     <Select onValueChange={(val) => motoForm.setValue("color", val)}>
+                       <SelectTrigger className="bg-white dark:bg-slate-900 text-black dark:text-white">
+                         <SelectValue placeholder="Renk Seçin" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="Beyaz">Beyaz</SelectItem>
+                         <SelectItem value="Siyah">Siyah</SelectItem>
+                         <SelectItem value="Kırmızı">Kırmızı</SelectItem>
+                         <SelectItem value="Mavi">Mavi</SelectItem>
+                         <SelectItem value="Sarı">Sarı</SelectItem>
+                         <SelectItem value="Yeşil">Yeşil</SelectItem>
+                         <SelectItem value="Gri">Gri</SelectItem>
+                         <SelectItem value="Turuncu">Turuncu</SelectItem>
+                       </SelectContent>
+                    </Select>
+                   </div>
+                   <div className="space-y-2">
+                     <Label className="text-black dark:text-gray-200">Ağır Hasar Kayıtlı Mı?</Label>
+                     <Select onValueChange={(val) => motoForm.setValue("heavyDamage", val === "true")}>
+                       <SelectTrigger className="bg-white dark:bg-slate-900 text-black dark:text-white">
+                         <SelectValue placeholder="Seçiniz" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="false">Hayır</SelectItem>
+                         <SelectItem value="true">Evet</SelectItem>
+                       </SelectContent>
+                    </Select>
+                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-black dark:text-gray-200">İlan Açıklaması</Label>
+                  <Textarea {...motoForm.register("description")} className="bg-white dark:bg-slate-900 text-black dark:text-white" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-black dark:text-gray-200">Görseller</Label>
+                  <Input 
+                    type="file" 
+                    multiple
+                    accept="image/*" 
+                    onChange={handleFileSelect}
+                    className="bg-white dark:bg-slate-900 text-black dark:text-white"
+                  />
+                  {selectedFiles.length > 0 && (
+                     <div className="text-sm text-muted-foreground mt-2">
+                        {selectedFiles.length} dosya seçildi
+                     </div>
+                  )}
+                </div>
+
+                <Button type="submit" className="w-full" disabled={createMotoMutation.isPending}>
+                  {createMotoMutation.isPending ? "Oluşturuluyor..." : "İlanı Oluştur"}
+                </Button>
+
               </form>
             </CardContent>
           </Card>

@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "SQLITE_ERROR"
+  },
+  "message": "no such table: motorcycles",
+  "isZod": false,
+  "zodErrors": null
+}

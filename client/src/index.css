@@ -16,3 +16,18 @@
 body {
   @apply bg-white text-black antialiased;
 }
+
+@layer utilities {
+  .animate-flash {
+    animation: flash 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}

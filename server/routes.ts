@@ -2,6 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
+import { insertMotorcycleSchema } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import multer from "multer";
@@ -35,6 +36,14 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  // Middleware to check if user is admin
+  const isAdmin = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
+      return res.status(403).send("Forbidden");
+    }
+    next();
+  };
+
   // Serve attached assets
   app.use("/assets", (req, res, next) => {
       const filePath = path.join(process.cwd(), "attached_assets", req.path);
@@ -57,7 +66,7 @@ export async function registerRoutes(
   });
 
   // Product Creation with Image Upload
-  app.post(api.products.create.path, upload.array("images"), async (req, res) => {
+  app.post(api.products.create.path, isAdmin, upload.array("images"), async (req, res) => {
     try {
       const files = req.files as Express.Multer.File[];
       if (!files || files.length === 0) {
@@ -76,26 +85,24 @@ export async function registerRoutes(
         stock: Number(req.body.stock),
         categoryId: Number(req.body.categoryId),
         brand: req.body.brand || "",
-        model: req.body.model,
+        model: req.body.model || "",
         year: req.body.year ? Number(req.body.year) : undefined,
         isFeatured: req.body.isFeatured === "true",
         imageUrl: primaryImageUrl,
         images: JSON.stringify(imageUrls), 
       };
 
-      // Since schema validation might fail on 'images' field being string vs whatever schema expects (if updated schema),
-      // we should be careful. Schema expects 'images' to be string (JSON).
-      
       const product = await storage.createProduct(inputData);
       res.status(201).json(product);
     } catch (err) {
+      console.error("POST /api/products Error:", err);
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           message: err.errors[0].message,
           field: err.errors[0].path.join('.'),
         });
       }
-      throw err;
+      res.status(500).json({ message: err instanceof Error ? err.message : "Internal Server Error" });
     }
   });
 
@@ -146,13 +153,7 @@ export async function registerRoutes(
     }
   });
 
-  // Middleware to check if user is admin
-  const isAdmin = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
-      return res.status(403).send("Forbidden");
-    }
-    next();
-  };
+
 
   // Admin: Get All Messages
   app.get("/api/messages", isAdmin, async (req, res) => {
@@ -182,27 +183,7 @@ export async function registerRoutes(
     res.json(product);
   });
 
-  app.post(api.products.create.path, isAdmin, upload.single("image"), async (req, res) => {
-    try {
-      const productData = {
-        ...req.body,
-        price: Number(req.body.price),
-        stock: Number(req.body.stock),
-        categoryId: Number(req.body.categoryId),
-        year: req.body.year ? Number(req.body.year) : null,
-        isFeatured: req.body.isFeatured === 'true',
-        imageUrl: req.file ? `/assets/${req.file.filename}` : undefined
-      };
 
-      const product = await storage.createProduct(productData);
-      res.status(201).json(product);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
-      }
-      throw err;
-    }
-  });
 
   app.put("/api/products/:id", isAdmin, upload.array("images"), async (req, res) => {
     const id = parseInt(req.params.id as string);
@@ -289,9 +270,173 @@ export async function registerRoutes(
     }
   });
 
+  // Motorcycles API
+  
+  // GET /api/motorcycles 
+  app.get("/api/motorcycles", async (req, res) => {
+    const filters = {
+      brand: req.query.brand as string,
+      type: req.query.type as string,
+      minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
+      maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+      minYear: req.query.minYear ? Number(req.query.minYear) : undefined,
+      maxYear: req.query.maxYear ? Number(req.query.maxYear) : undefined, 
+      minKm: req.query.minKm ? Number(req.query.minKm) : undefined,
+      maxKm: req.query.maxKm ? Number(req.query.maxKm) : undefined,
+      city: req.query.city as string,
+    };
 
-  // Seed data
-  await seedDatabase();
+    const motos = await storage.getMotorcycles(filters);
+    res.json(motos);
+  });
+
+  // GET /api/motorcycles/:id
+  app.get("/api/motorcycles/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    
+    const moto = await storage.getMotorcycle(id);
+    if (!moto) return res.status(404).json({ message: "Motorcycle not found" });
+    
+    res.json(moto);
+  });
+
+  // POST /api/motorcycles (Admin only)
+  app.post("/api/motorcycles", isAdmin, upload.array("images"), async (req, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      const imageUrls = files.map(file => `/assets/${file.filename}`);
+      
+      const inputData = {
+        brand: req.body.brand,
+        model: req.body.model,
+        price: Number(req.body.price),
+        city: req.body.city,
+        district: req.body.district,
+        neighborhood: req.body.neighborhood,
+        type: req.body.type,
+        year: Number(req.body.year),
+        km: Number(req.body.km),
+        engineVolume: req.body.engineVolume,
+        color: req.body.color,
+        heavyDamage: req.body.heavyDamage === "true",
+        description: req.body.description,
+        images: JSON.stringify(imageUrls),
+      };
+
+      // Log input data for debugging
+      const fs = await import('fs');
+      fs.writeFileSync('debug_input.json', JSON.stringify(inputData, null, 2));
+
+      // Explicitly parse with Zod to catch validation errors
+      const validatedData = insertMotorcycleSchema.parse(inputData);
+
+      const moto = await storage.createMotorcycle(validatedData);
+      res.status(201).json(moto);
+    } catch (err) {
+      console.error("POST /api/motorcycles Error:", err);
+      // Log error to file
+      const fs = await import('fs');
+      fs.writeFileSync('debug_error.json', JSON.stringify({
+        error: err,
+        message: err instanceof Error ? err.message : String(err),
+        isZod: err instanceof z.ZodError,
+        zodErrors: err instanceof z.ZodError ? err.errors : null
+      }, null, 2));
+
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: `${err.errors[0].path.join('.')} - ${err.errors[0].message}`,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      res.status(500).json({ message: err instanceof Error ? err.message : "Failed to create motorcycle listing" });
+    }
+  });
+  
+  // PUT /api/motorcycles/:id (Admin only)
+  app.put("/api/motorcycles/:id", isAdmin, upload.array("images"), async (req, res) => {
+    const id = parseInt(req.params.id as string);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+    try {
+      const files = req.files as Express.Multer.File[];
+      let imageUrls: string[] | undefined;
+
+      if (files && files.length > 0) {
+        imageUrls = files.map(file => `/assets/${file.filename}`);
+      }
+
+      const inputData: any = {
+        brand: String(req.body.brand),
+        model: String(req.body.model),
+        price: req.body.price ? Number(req.body.price) : undefined,
+        city: String(req.body.city),
+        district: String(req.body.district),
+        neighborhood: String(req.body.neighborhood),
+        type: String(req.body.type),
+        year: req.body.year ? Number(req.body.year) : undefined,
+        km: req.body.km ? Number(req.body.km) : undefined,
+        engineVolume: String(req.body.engineVolume),
+        color: String(req.body.color),
+        heavyDamage: String(req.body.heavyDamage) === "true",
+        description: String(req.body.description),
+      };
+
+      if (imageUrls) {
+        inputData.images = JSON.stringify(imageUrls);
+      }
+
+      // If existing images are kept, we need to handle them. 
+      // For now, if new files are uploaded, they replace old ones.
+      // If we want to append or remove specific ones, frontend needs to send the current list.
+      // Let's check if 'existingImages' is sent
+      if (req.body.existingImages) {
+          let existing: string[] = [];
+          try {
+              const parsed = JSON.parse(req.body.existingImages as string);
+              if (Array.isArray(parsed)) {
+                  existing = parsed;
+              } else {
+                  existing = [parsed];
+              }
+          } catch (e) {
+              const val = req.body.existingImages as string;
+              existing = [val];
+          }
+           if (imageUrls) {
+               // Append new images to existing ones
+               const combined = [...existing, ...imageUrls];
+               inputData.images = JSON.stringify(combined);
+           } else {
+               // Just keep existing
+               inputData.images = JSON.stringify(existing);
+           }
+      }
+
+
+      const updatedMoto = await storage.updateMotorcycle(id, inputData);
+      if (!updatedMoto) return res.status(404).json({ message: "Motorcycle not found" });
+
+      res.json(updatedMoto);
+    } catch (err) {
+      console.error("PUT /api/motorcycles/:id Error:", err);
+      res.status(500).json({ message: "Failed to update motorcycle" });
+    }
+  });
+
+  // DELETE /api/motorcycles/:id (Admin only)
+  app.delete("/api/motorcycles/:id", isAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    
+    try {
+      await storage.deleteMotorcycle(id);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete motorcycle" });
+    }
+  });
 
   return httpServer;
 }

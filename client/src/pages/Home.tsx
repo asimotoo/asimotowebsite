@@ -61,7 +61,7 @@ export default function Home() {
                 <span className="text-black dark:text-white">
                   EN BÜYÜK
                 </span> <br />
-                YEDEK PARÇA BORSASI
+                YEDEK PARÇA TEDARİKÇİSİ
               </h1>
               <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 max-w-lg leading-relaxed mb-10 mx-auto md:mx-0 font-medium">
                 Aradığınız tüm orijinal ve yan sanayi yedek parçalar, aksesuarlar ve ekipmanlar burada.

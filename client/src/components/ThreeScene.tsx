@@ -4,7 +4,7 @@ import { Environment, Html, ContactShadows, PresentationControls, useGLTF } from
 import * as THREE from "three";
 
 function YamahaR1Model() {
-  const { scene } = useGLTF("https://6ndngeh9a2b4fffw.public.blob.vercel-storage.com/2022_yamaha_r1.glb");
+  const { scene } = useGLTF("/models/2022_yamaha_r1.glb");
   const modelRef = useRef<THREE.Group>(null);
   
   useFrame((state) => {

@@ -44,11 +44,35 @@ export const messages = sqliteTable("messages", {
   createdAt: integer("created_at", { mode: "timestamp" }).default(new Date()),
 });
 
+export const motorcycles = sqliteTable("motorcycles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  brand: text("brand").notNull(),
+  model: text("model").notNull(),
+  price: integer("price").notNull(), // in cents/kurus
+  city: text("city").notNull(),
+  district: text("district").notNull(),
+  neighborhood: text("neighborhood").notNull(),
+  listingDate: integer("listing_date", { mode: "timestamp" }).default(new Date()),
+  type: text("type").notNull(), // SuperSport, Chopper, etc.
+  year: integer("year").notNull(),
+  km: integer("km").notNull(),
+  engineVolume: text("engine_volume").notNull(),
+  color: text("color").notNull(),
+  heavyDamage: integer("heavy_damage", { mode: "boolean" }).default(false),
+  description: text("description").notNull(),
+  images: text("images").notNull().default('[]'),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(new Date()),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
 });
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
+});
+export const insertMotorcycleSchema = createInsertSchema(motorcycles).omit({
+  id: true,
+  createdAt: true,
 });
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
@@ -60,6 +84,8 @@ export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Motorcycle = typeof motorcycles.$inferSelect;
+export type InsertMotorcycle = z.infer<typeof insertMotorcycleSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Favorite = typeof favorites.$inferSelect;
