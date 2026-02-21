@@ -39,10 +39,13 @@ async function buildAll() {
   console.log("building client...");
   await viteBuild({
     root: path.resolve(process.cwd(), "client"),
-    configFile: path.resolve(process.cwd(), "client", "vite.config.ts"),
+    configFile: path.resolve(process.cwd(), "vite.config.ts"),
     build: {
       outDir: path.resolve(process.cwd(), "dist", "public"),
       emptyOutDir: true,
+      rollupOptions: {
+        input: path.resolve(process.cwd(), "client", "index.html"),
+      },
     },
   });
 

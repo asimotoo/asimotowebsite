@@ -11,8 +11,8 @@ const viteLogger = createLogger();
 // __dirname fix (ESM için)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// 👉 Vite config yolu (client içinde!)
-const viteConfigPath = path.resolve(__dirname, "../client/vite.config.ts");
+// 👉 Vite config yolu (Ana dizinde!)
+const viteConfigPath = path.resolve(__dirname, "../vite.config.ts");
 
 export async function setupVite(server: Server, app: Express) {
   const serverOptions = {
