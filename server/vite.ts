@@ -1,12 +1,18 @@
 import { type Express } from "express";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url"; 
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
+
+// __dirname fix (ESM için)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// 👉 Vite config yolu (client içinde!)
+const viteConfigPath = path.resolve(__dirname, "../client/vite.config.ts");
 
 export async function setupVite(server: Server, app: Express) {
   const serverOptions = {
@@ -16,13 +22,12 @@ export async function setupVite(server: Server, app: Express) {
   };
 
   const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
+    root: path.resolve(__dirname, "..", "client"),
+    configFile: viteConfigPath,
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
-        process.exit(1);
       },
     },
     server: serverOptions,
@@ -36,18 +41,19 @@ export async function setupVite(server: Server, app: Express) {
 
     try {
       const clientTemplate = path.resolve(
-        import.meta.dirname,
+        __dirname,
         "..",
         "client",
-        "index.html",
+        "index.html"
       );
 
-      // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
+
       template = template.replace(
         `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
+        `src="/src/main.tsx?v=${nanoid()}"`
       );
+
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {

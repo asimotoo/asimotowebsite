@@ -23,13 +23,24 @@ async function comparePassword(stored: string, supplied: string) {
 
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
+import { pool } from "../../db";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const MemoryStore = require('memorystore')(session);
-  const sessionStore = new MemoryStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  });
+  let sessionStore;
+
+  if (process.env.NODE_ENV === "production") {
+    const PostgresStore = require('connect-pg-simple')(session);
+    sessionStore = new PostgresStore({
+      pool: pool,
+      createTableIfMissing: true, 
+    });
+  } else {
+    const MemoryStore = require('memorystore')(session);
+    sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
+  }
 
   return session({
     secret: process.env.SESSION_SECRET || "default_secret",

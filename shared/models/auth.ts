@@ -1,20 +1,20 @@
 import { sql } from "drizzle-orm";
-import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
+import { text, integer, pgTable, timestamp, jsonb } from "drizzle-orm/pg-core";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-export const sessions = sqliteTable(
+export const sessions = pgTable(
   "sessions",
   {
     sid: text("sid").primaryKey(),
-    sess: text("sess", { mode: "json" }).notNull(),
-    expire: integer("expire", { mode: "timestamp" }).notNull(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
   }
 );
 
 // User storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text("email").unique(),
   firstName: text("first_name"),
@@ -24,8 +24,8 @@ export const users = sqliteTable("users", {
   profileImageUrl: text("profile_image_url"),
   role: text("role").default("user").notNull(),
   password: text("password").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(new Date()),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
