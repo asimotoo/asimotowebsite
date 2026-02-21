@@ -60,34 +60,47 @@ app.use((req, res, next) => {
   next();
 });
 
+log("Server environment: " + process.env.NODE_ENV);
+log("Vercel environment: " + process.env.VERCEL);
+
 const setupPromise = (async () => {
-  await registerRoutes(httpServer, app);
+    try {
+        log("Starting server setup...");
+        await registerRoutes(httpServer, app);
+        
+        app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+            const status = err.status || err.statusCode || 500;
+            const message = err.message || "Internal Server Error";
+            console.error("Internal Server Error:", err);
+            if (res.headersSent) return next(err);
+            return res.status(status).json({ message });
+        });
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    console.error("Internal Server Error:", err);
-
-    if (res.headersSent) {
-      return next(err);
+        if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+            log("Configuring static file serving (production)");
+            serveStatic(app);
+        } else {
+            log("Configuring Vite (development)");
+            const { setupVite } = await import("./vite");
+            await setupVite(httpServer, app);
+        }
+        log("Server setup successfully completed");
+        return app;
+    } catch (error) {
+        console.error("Critical: Server setup failed!", error);
+        throw error;
     }
-
-    return res.status(status).json({ message });
-  });
-
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
-  }
-  return app;
 })();
 
 export default async (req: Request, res: Response) => {
-  await setupPromise;
-  return app(req, res);
+  log(`Request received: ${req.method} ${req.url}`);
+  try {
+      await setupPromise;
+      return app(req, res);
+  } catch (error) {
+      console.error("Handler error:", error);
+      res.status(500).send("Internal Server Error: Server Setup Failed");
+  }
 };
 
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {

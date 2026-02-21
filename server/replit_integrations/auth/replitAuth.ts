@@ -21,22 +21,23 @@ async function comparePassword(stored: string, supplied: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+import PostgresStoreFactory from "connect-pg-simple";
+import MemoryStoreFactory from "memorystore";
 import { pool } from "../../db";
+
+const PostgresStore = PostgresStoreFactory(session);
+const MemoryStore = MemoryStoreFactory(session);
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   let sessionStore;
 
-  if (process.env.NODE_ENV === "production") {
-    const PostgresStore = require('connect-pg-simple')(session);
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
     sessionStore = new PostgresStore({
       pool: pool,
       createTableIfMissing: true, 
     });
   } else {
-    const MemoryStore = require('memorystore')(session);
     sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     });
