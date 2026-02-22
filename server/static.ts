@@ -4,16 +4,16 @@ import path from "path";
 
 export function serveStatic(app: Express) {
   const rootDir = process.cwd();
-  let distPath = path.resolve(rootDir, "dist", "public");
+  // On Vercel with outputDirectory: dist, the deployment root contains the 'public' folder directly
+  let distPath = path.resolve(rootDir, "public");
   
   if (!fs.existsSync(distPath)) {
-      // Try relative to __dirname (useful for some bundling scenarios)
-      distPath = path.resolve(__dirname, "..", "dist", "public");
+      // Fallback for local testing or other structures
+      distPath = path.resolve(rootDir, "dist", "public");
   }
 
   if (!fs.existsSync(distPath)) {
-      // Fallback to a plain 'public' directory at root if that was used
-      distPath = path.resolve(rootDir, "public");
+      distPath = path.resolve(__dirname, "..", "public");
   }
 
   if (!fs.existsSync(distPath)) {
