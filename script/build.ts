@@ -3,9 +3,8 @@ import { mkdir, rm, readFile, readdir } from "fs/promises";
 import { existsSync } from "fs";
 
 const ROOT = process.cwd();
-const DIST = path.join(ROOT, "dist");
-const DIST_PUBLIC = path.join(DIST, "public");
-const DIST_API = path.join(DIST, "api");
+const PUBLIC = path.join(ROOT, "public");
+const API = path.join(ROOT, "api");
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -39,12 +38,12 @@ const allowlist = [
 
 async function buildAll() {
   console.log(`Building in: ${ROOT}`);
-  console.log(`Target dist: ${DIST}`);
-
-  await rm(DIST, { recursive: true, force: true });
-  await mkdir(DIST, { recursive: true });
-  await mkdir(DIST_PUBLIC, { recursive: true });
-  await mkdir(DIST_API, { recursive: true });
+  
+  // Clean up existing folders
+  await rm(PUBLIC, { recursive: true, force: true });
+  await rm(API, { recursive: true, force: true });
+  await mkdir(PUBLIC, { recursive: true });
+  await mkdir(API, { recursive: true });
 
   console.log("building client...");
   const { build: viteBuild } = await import("vite");
@@ -52,7 +51,7 @@ async function buildAll() {
     root: path.join(ROOT, "client"),
     configFile: path.join(ROOT, "vite.config.ts"),
     build: {
-      outDir: DIST_PUBLIC,
+      outDir: PUBLIC,
       emptyOutDir: true,
       rollupOptions: {
         input: path.join(ROOT, "client", "index.html"),
@@ -74,7 +73,7 @@ async function buildAll() {
     platform: "node",
     bundle: true,
     format: "cjs",
-    outfile: path.join(DIST, "api", "index.js"),
+    outfile: path.join(API, "index.js"),
     define: {
       "process.env.NODE_ENV": '"production"',
     },
@@ -84,11 +83,8 @@ async function buildAll() {
   });
 
   console.log("Build verification...");
-  if (existsSync(DIST)) {
-      console.log("dist directory found!");
-  } else {
-      console.error("CRITICAL: dist directory MISSING after build!");
-  }
+  if (existsSync(API)) console.log("api folder found!");
+  if (existsSync(PUBLIC)) console.log("public folder found!");
 }
 
 buildAll().catch((err) => {
