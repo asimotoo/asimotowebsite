@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(process.cwd(), "dist", "public"),
+    outDir: path.resolve(process.cwd(), "dist"),
     emptyOutDir: true,
   },
 });

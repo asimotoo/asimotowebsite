@@ -1,11 +1,10 @@
 import path from "path";
-import { mkdir, rm, readFile, readdir } from "fs/promises";
+import { mkdir, rm, readFile } from "fs/promises";
 import { existsSync } from "fs";
 
 const ROOT = process.cwd();
 const DIST = path.join(ROOT, "dist");
-const DIST_PUBLIC = path.join(DIST, "public");
-const DIST_API = path.join(DIST, "api");
+const API_DIR = path.join(ROOT, "api");
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -39,21 +38,21 @@ const allowlist = [
 
 async function buildAll() {
   console.log(`Building in: ${ROOT}`);
-  console.log(`Target dist: ${DIST}`);
-  
-  // Clean up existing folders
-  await rm(DIST, { recursive: true, force: true });
-  await mkdir(DIST, { recursive: true });
-  await mkdir(DIST_PUBLIC, { recursive: true });
-  await mkdir(DIST_API, { recursive: true });
 
+  // Clean build folders
+  await rm(DIST, { recursive: true, force: true });
+  await rm(API_DIR, { recursive: true, force: true });
+  await mkdir(DIST, { recursive: true });
+  await mkdir(API_DIR, { recursive: true });
+
+  // 1. Build client → dist/ (flat, so dist/index.html is at top level)
   console.log("building client...");
   const { build: viteBuild } = await import("vite");
   await viteBuild({
     root: path.join(ROOT, "client"),
     configFile: path.join(ROOT, "vite.config.ts"),
     build: {
-      outDir: DIST_PUBLIC,
+      outDir: DIST,
       emptyOutDir: true,
       rollupOptions: {
         input: path.join(ROOT, "client", "index.html"),
@@ -61,6 +60,8 @@ async function buildAll() {
     },
   });
 
+  // 2. Build server → api/index.js (at project root, NOT inside dist)
+  //    Vercel detects api/ at root as serverless functions
   console.log("building server...");
   const { build: esbuild } = await import("esbuild");
   const pkg = JSON.parse(await readFile(path.join(ROOT, "package.json"), "utf-8"));
@@ -75,7 +76,7 @@ async function buildAll() {
     platform: "node",
     bundle: true,
     format: "cjs",
-    outfile: path.join(DIST_API, "index.js"),
+    outfile: path.join(API_DIR, "index.js"),
     define: {
       "process.env.NODE_ENV": '"production"',
     },
@@ -85,7 +86,8 @@ async function buildAll() {
   });
 
   console.log("Build verification...");
-  if (existsSync(DIST)) console.log("dist folder found!");
+  if (existsSync(DIST)) console.log("dist/ (static files) found!");
+  if (existsSync(path.join(API_DIR, "index.js"))) console.log("api/index.js (serverless function) found!");
 }
 
 buildAll().catch((err) => {
