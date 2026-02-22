@@ -4,16 +4,16 @@ import path from "path";
 
 export function serveStatic(app: Express) {
   const rootDir = process.cwd();
-  // We now build directly to the root 'public' folder
+  // Case A: Running in Vercel. dist is the root, so public/ is at top level
   let distPath = path.resolve(rootDir, "public");
   
   if (!fs.existsSync(distPath)) {
-      // Fallback for local testing or old structure
+      // Case B: Local dev or specific bundling. public is inside dist/
       distPath = path.resolve(rootDir, "dist", "public");
   }
 
   if (!fs.existsSync(distPath)) {
-      // Relative fallback
+      // Case C: Bundle-relative resolution
       distPath = path.resolve(__dirname, "..", "public");
   }
 
