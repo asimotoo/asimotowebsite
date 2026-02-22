@@ -74,7 +74,7 @@ async function buildAll() {
     platform: "node",
     bundle: true,
     format: "cjs",
-    outfile: path.join(DIST_API, "index.js"),
+    outfile: path.join(ROOT, "api", "index.js"),
     define: {
       "process.env.NODE_ENV": '"production"',
     },

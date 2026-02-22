@@ -3,11 +3,17 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
-  let distPath = path.resolve(__dirname, "public");
+  const rootDir = process.cwd();
+  let distPath = path.resolve(rootDir, "dist", "public");
   
   if (!fs.existsSync(distPath)) {
-      // Try parent directory (useful when bundled in dist/api/index.cjs)
-      distPath = path.resolve(__dirname, "..", "public");
+      // Try relative to __dirname (useful for some bundling scenarios)
+      distPath = path.resolve(__dirname, "..", "dist", "public");
+  }
+
+  if (!fs.existsSync(distPath)) {
+      // Fallback to a plain 'public' directory at root if that was used
+      distPath = path.resolve(rootDir, "public");
   }
 
   if (!fs.existsSync(distPath)) {
