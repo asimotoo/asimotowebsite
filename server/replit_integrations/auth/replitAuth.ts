@@ -91,11 +91,16 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password, role } = req.body;
+      const { username, password, firstName, lastName, phone, email, role } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Kullanıcı adı ve şifre gereklidir" });
+      }
+
       const existingUser = await authStorage.getUserByUsername(username);
       
       if (existingUser) {
-        return res.status(400).send("User already exists");
+        return res.status(400).json({ message: "Bu e-posta adresi zaten kayıtlı" });
       }
 
       const hashedPassword = await hashPassword(password);
@@ -103,7 +108,10 @@ export function setupAuth(app: Express) {
         username,
         password: hashedPassword,
         role: role || "user",
-        email: username, // Using username as email for simplicity if needed, or separate them
+        email: email || username,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        phone: phone || null,
       });
 
       req.login(user, (err) => {
@@ -111,6 +119,7 @@ export function setupAuth(app: Express) {
         res.status(201).json(user);
       });
     } catch (err) {
+      console.error("Registration error:", err);
       next(err);
     }
   });
