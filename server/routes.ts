@@ -465,11 +465,15 @@ async function seedDatabase() {
   }
 
   // Seed Admin User
-  const adminUsername = "asimotoibrahim12";
+  const adminUsername = "asimotoibrahim71";
   const oldAdminUsername = "admin@asimoto.com";
+  const oldAdminUsername2 = "asimotoibrahim12";
   
   // Check for admin by new username or old default username
   let existingAdmin = await storage.getUserByUsername(adminUsername);
+  if (!existingAdmin) {
+    existingAdmin = await storage.getUserByUsername(oldAdminUsername2);
+  }
   if (!existingAdmin) {
     existingAdmin = await storage.getUserByUsername(oldAdminUsername);
   }
