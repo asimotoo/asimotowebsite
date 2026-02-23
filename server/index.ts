@@ -92,7 +92,7 @@ const setupPromise = (async () => {
     }
 })();
 
-export default async (req: Request, res: Response) => {
+const handler = async (req: Request, res: Response) => {
   log(`Request received: ${req.method} ${req.url}`);
   try {
       await setupPromise;
@@ -102,6 +102,14 @@ export default async (req: Request, res: Response) => {
       res.status(500).send("Internal Server Error: Server Setup Failed");
   }
 };
+
+export default handler;
+
+// Vercel CJS compatibility — ensures module.exports = handler
+// when bundled with format: "cjs"
+if (typeof module !== "undefined") {
+  module.exports = handler;
+}
 
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   (async () => {
