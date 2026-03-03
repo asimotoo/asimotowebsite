@@ -438,6 +438,9 @@ export async function registerRoutes(
     }
   });
 
+  // Seed database with categories and admin user
+  await seedDatabase();
+
   return httpServer;
 }
 
