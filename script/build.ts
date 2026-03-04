@@ -96,7 +96,7 @@ async function buildAll() {
 
   // Create output directories
   await mkdir(VERCEL_STATIC, { recursive: true });
-  const funcDir = path.join(VERCEL_FUNCTIONS, "api", "index.func");
+  const funcDir = path.join(VERCEL_FUNCTIONS, "index.func");
   await mkdir(funcDir, { recursive: true });
 
   // Copy static files (dist → .vercel/output/static)
@@ -131,16 +131,16 @@ async function buildAll() {
         // 1. API routes
         {
           src: "^/api/(.*)$",
-          dest: "/api/index",
+          dest: "/index",
         },
         // 2. Static files check
         {
           handle: "filesystem"
         },
-        // 3. SPA Fallback - all other routes go to the function
+        // 3. SPA Fallback - all other routes go to the main function
         {
           src: "^/(.*)$",
-          dest: "/api/index",
+          dest: "/index",
         },
       ],
     }, null, 2)
