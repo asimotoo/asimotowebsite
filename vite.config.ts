@@ -13,6 +13,6 @@ export default defineConfig({
   },
   build: {
     outDir: path.resolve(process.cwd(), "dist"),
-    emptyOutDir: true,
+    emptyOutDir: false,
   },
 });
