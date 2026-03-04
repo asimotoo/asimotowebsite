@@ -41,6 +41,21 @@ export async function registerRoutes(
     res.json({ message: "pong", timestamp: new Date().toISOString() });
   });
 
+  app.get("/api/diag/users", async (_req, res) => {
+    try {
+      const allUsers = await storage.getUserByUsername("asimotoibrahim71");
+      res.json({ 
+        adminExists: !!allUsers, 
+        adminRole: allUsers?.role,
+        adminUsername: allUsers?.username,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+
   // Middleware to check if user is admin
   const isAdmin = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
