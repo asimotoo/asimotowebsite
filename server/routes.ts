@@ -36,6 +36,11 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  // Debug route for Vercel
+  app.get("/api/ping", (_req, res) => {
+    res.json({ message: "pong", timestamp: new Date().toISOString() });
+  });
+
   // Middleware to check if user is admin
   const isAdmin = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated() || (req.user as any).role !== "admin") {

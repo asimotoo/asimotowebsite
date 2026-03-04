@@ -128,18 +128,15 @@ async function buildAll() {
     JSON.stringify({
       version: 3,
       routes: [
-        // 1. API routes
-        {
-          src: "^/api/(.*)$",
-          dest: "/index",
-        },
-        // 2. Static files check
         {
           handle: "filesystem"
         },
-        // 3. SPA Fallback - all other routes go to the main function
         {
-          src: "^/(.*)$",
+          src: "/api/(.*)",
+          dest: "/index",
+        },
+        {
+          src: "/(.*)",
           dest: "/index",
         },
       ],
