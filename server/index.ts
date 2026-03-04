@@ -99,7 +99,12 @@ const handler = async (req: Request, res: Response) => {
       return app(req, res);
   } catch (error) {
       console.error("Handler error:", error);
-      res.status(500).send("Internal Server Error: Server Setup Failed");
+      const errMsg = error instanceof Error ? error.message : String(error);
+      // Use raw Node.js response methods for safety
+      if (!res.headersSent) {
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        res.end(`Internal Server Error: ${errMsg}`);
+      }
   }
 };
 

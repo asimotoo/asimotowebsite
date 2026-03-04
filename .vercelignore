@@ -1,0 +1,9 @@
+node_modules
+.git
+*.glb
+*.tar.gz
+sqlite.db
+.DS_Store
+.env
+.env.*
+client/node_modules
