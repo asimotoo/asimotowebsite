@@ -79,19 +79,31 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`[auth] Attempting login for user: ${username}`);
         const user = await authStorage.getUserByUsername(username);
+        
         if (!user) {
+          console.log(`[auth] Login failed: User ${username} not found.`);
           return done(null, false, { message: "Incorrect username." });
         }
-        if (!await comparePassword(user.password, password)) {
+        
+        console.log(`[auth] User ${username} found. Comparing passwords...`);
+        const isMatch = await comparePassword(user.password, password);
+        
+        if (!isMatch) {
+          console.log(`[auth] Login failed: Incorrect password for user ${username}.`);
           return done(null, false, { message: "Incorrect password." });
         }
+        
+        console.log(`[auth] Login successful for user: ${username}, role: ${user.role}`);
         return done(null, user);
       } catch (err) {
+        console.error(`[auth] CRITICAL ERROR during authentication:`, err);
         return done(err);
       }
     }),
   );
+
 
   passport.serializeUser((user: any, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {
