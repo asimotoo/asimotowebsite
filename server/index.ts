@@ -2,11 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import dotenv from "dotenv";
-
-dotenv.config();
-dotenv.config({ path: ".env.local" });
-
 const app = express();
 export { app };
 const httpServer = createServer(app);
