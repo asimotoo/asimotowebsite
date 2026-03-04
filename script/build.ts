@@ -128,11 +128,6 @@ async function buildAll() {
     JSON.stringify({
       version: 3,
       routes: [
-        // API routes go to the serverless function
-        {
-          src: "/api/(.*)",
-          dest: "/api/index",
-        },
         // Static assets (JS, CSS, images, etc.)
         {
           src: "/assets/(.*)",
@@ -147,7 +142,15 @@ async function buildAll() {
           src: "/blog/(.*)",
           dest: "/blog/$1",
         },
-        // SPA fallback - all other routes go through the serverless function
+        // API routes go to the serverless function
+        {
+          src: "/api/(.*)",
+          dest: "/api/index",
+        },
+        // SPA fallback - if file exists in static, use it, otherwise go to function
+        {
+          handle: "filesystem"
+        },
         {
           src: "/(.*)",
           dest: "/api/index",

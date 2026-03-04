@@ -345,9 +345,11 @@ export async function registerRoutes(
       }, null, 2));
 
       if (err instanceof z.ZodError) {
+        console.error("Zod Error Details:", JSON.stringify(err.errors, null, 2));
         return res.status(400).json({
           message: `${err.errors[0].path.join('.')} - ${err.errors[0].message}`,
           field: err.errors[0].path.join('.'),
+          errors: err.errors
         });
       }
       res.status(500).json({ message: err instanceof Error ? err.message : "Failed to create motorcycle listing" });
