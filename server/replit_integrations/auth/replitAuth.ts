@@ -54,16 +54,20 @@ export function getSession() {
   }
 
   return session({
-    secret: process.env.SESSION_SECRET || "default_secret",
+    secret: process.env.SESSION_SECRET || "asi20moto26",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    name: "asimoto_sid", // Specific name for the cookie
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true, // Always true for https on Vercel
+      sameSite: "lax",
       maxAge: sessionTtl,
+      path: "/",
     },
   });
+
 }
 
 export function setupAuth(app: Express) {
