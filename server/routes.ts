@@ -8,7 +8,10 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 import nodemailer from "nodemailer";
+const scryptAsync = promisify(scrypt);
 
 // Configure Multer for local file storage
 const upload = multer({
@@ -500,16 +503,13 @@ async function seedDatabase() {
     // Check for admin by username
     let existingAdmin = await storage.getUserByUsername(adminUsername);
     
-    // START TEMPORARY HASH GENERATION
+    // START PASSWORD HASH GENERATION
     console.log("[seed] Generating password hash...");
-    const { scrypt, randomBytes } = await import("crypto");
-    const { promisify } = await import("util");
-    const scryptAsync = promisify(scrypt);
     const salt = randomBytes(16).toString("hex");
     const buf = (await scryptAsync("asi20moto26", salt, 64)) as Buffer;
     const hash = `${buf.toString("hex")}.${salt}`;
     console.log("[seed] Password hash generated.");
-    // END TEMPORARY
+    // END
       
     if (existingAdmin) {
       console.log(`[seed] User ${adminUsername} exists, updating to ensure admin role and correct password.`);
