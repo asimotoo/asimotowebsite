@@ -2,6 +2,10 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import dotenv from "dotenv";
+
+dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 const app = express();
 export { app };
@@ -63,7 +67,7 @@ app.use((req, res, next) => {
 log("Server environment: " + process.env.NODE_ENV);
 log("Vercel environment: " + process.env.VERCEL);
 
-const setupPromise = (async () => {
+export const setupPromise = (async () => {
     try {
         log("Starting server setup...");
         await registerRoutes(httpServer, app);
