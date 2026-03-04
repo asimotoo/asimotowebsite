@@ -13,14 +13,7 @@ declare module "http" {
   }
 }
 
-app.use(
-  express.json({
-    verify: (req, _res, buf) => {
-      req.rawBody = buf;
-    },
-  }),
-);
-
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 export function log(message: string, source = "express") {
@@ -76,10 +69,7 @@ export const setupPromise = (async () => {
             return res.status(status).json({ message });
         });
 
-        if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-            log("Configuring static file serving (production)");
-            serveStatic(app);
-        } else {
+        if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
             log("Configuring Vite (development)");
             const { setupVite } = await import("./vite");
             await setupVite(httpServer, app);
