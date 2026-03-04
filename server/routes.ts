@@ -10,6 +10,7 @@ import path from "path";
 import fs from "fs";
 import { hashPassword } from "./replit_integrations/auth";
 import nodemailer from "nodemailer";
+import { pool } from "./db";
 
 // Configure Multer for local file storage
 const upload = multer({
@@ -470,6 +471,18 @@ export async function registerRoutes(
 async function seedDatabase() {
   try {
     console.log("[seed] Starting seedDatabase...");
+    
+    // Ensure session table exists
+    console.log("[seed] Ensuring session table exists...");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL,
+        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+      )
+    `);
+    console.log("[seed] Session table verified.");
     const categories = await storage.getCategories();
     if (categories.length === 0) {
       console.log("[seed] Seeding categories...");

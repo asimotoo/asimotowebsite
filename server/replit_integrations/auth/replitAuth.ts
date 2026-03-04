@@ -38,20 +38,17 @@ export function getSession() {
   let sessionStore;
 
   if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-    // Manually create session table (createTableIfMissing reads a file from disk
-    // which doesn't exist in Vercel's serverless bundle)
-    pool.query(`
-      CREATE TABLE IF NOT EXISTS "session" (
-        "sid" varchar NOT NULL COLLATE "default",
-        "sess" json NOT NULL,
-        "expire" timestamp(6) NOT NULL,
-        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
-      )
-    `).catch((err: Error) => console.error("Session table creation error:", err));
-
-    sessionStore = new PostgresStore({
-      pool: pool,
-    });
+    try {
+      console.log("[auth] Initializing PostgresStore for sessions...");
+      sessionStore = new PostgresStore({
+        pool: pool,
+      });
+    } catch (err) {
+      console.error("[auth] Failed to initialize PostgresStore, falling back to MemoryStore:", err);
+      sessionStore = new MemoryStore({
+        checkPeriod: 86400000 
+      });
+    }
   } else {
     sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
