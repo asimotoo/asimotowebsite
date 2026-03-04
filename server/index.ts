@@ -63,7 +63,7 @@ app.use((req, res, next) => {
 log("Server environment: " + process.env.NODE_ENV);
 log("Vercel environment: " + process.env.VERCEL);
 
-const setupPromise = (async () => {
+export const setupPromise = (async () => {
     try {
         log("Starting server setup...");
         await registerRoutes(httpServer, app);
@@ -92,28 +92,12 @@ const setupPromise = (async () => {
     }
 })();
 
-const handler = async (req: Request, res: Response) => {
-  log(`Request received: ${req.method} ${req.url}`);
-  try {
-      await setupPromise;
-      return app(req, res);
-  } catch (error) {
-      console.error("Handler error:", error);
-      const errMsg = error instanceof Error ? error.message : String(error);
-      // Use raw Node.js response methods for safety
-      if (!res.headersSent) {
-        res.writeHead(500, { "Content-Type": "text/plain" });
-        res.end(`Internal Server Error: ${errMsg}`);
-      }
-  }
-};
+export default app;
 
-export default handler;
-
-// Vercel CJS compatibility — ensures module.exports = handler
+// Vercel CJS compatibility — ensures module.exports = app
 // when bundled with format: "cjs"
 if (typeof module !== "undefined") {
-  module.exports = handler;
+  module.exports = app;
 }
 
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
