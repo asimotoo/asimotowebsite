@@ -8,10 +8,8 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import { hashPassword } from "./replit_integrations/auth";
 import nodemailer from "nodemailer";
-const scryptAsync = promisify(scrypt);
 
 // Configure Multer for local file storage
 const upload = multer({
@@ -505,9 +503,7 @@ async function seedDatabase() {
     
     // START PASSWORD HASH GENERATION
     console.log("[seed] Generating password hash...");
-    const salt = randomBytes(16).toString("hex");
-    const buf = (await scryptAsync("asi20moto26", salt, 64)) as Buffer;
-    const hash = `${buf.toString("hex")}.${salt}`;
+    const hash = await hashPassword("asi20moto26");
     console.log("[seed] Password hash generated.");
     // END
       

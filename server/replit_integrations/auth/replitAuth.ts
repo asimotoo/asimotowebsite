@@ -8,18 +8,23 @@ import { authStorage } from "./storage";
 
 const scryptAsync = promisify(scrypt);
 
-async function hashPassword(password: string) {
+export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePassword(stored: string, supplied: string) {
+export async function comparePassword(stored: string, supplied: string) {
   const [hashed, salt] = stored.split(".");
+  if (!hashed || !salt) {
+    console.error("[auth] Invalid stored password format (missing salt)");
+    return false;
+  }
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
+
 
 import PostgresStoreFactory from "connect-pg-simple";
 import MemoryStoreFactory from "memorystore";
