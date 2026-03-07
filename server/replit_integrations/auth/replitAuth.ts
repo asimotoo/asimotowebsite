@@ -8,18 +8,23 @@ import { authStorage } from "./storage";
 
 const scryptAsync = promisify(scrypt);
 
-async function hashPassword(password: string) {
+export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePassword(stored: string, supplied: string) {
+export async function comparePassword(stored: string, supplied: string) {
   const [hashed, salt] = stored.split(".");
+  if (!hashed || !salt) {
+    console.error("[auth] Invalid stored password format (missing salt)");
+    return false;
+  }
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
+
 
 import PostgresStoreFactory from "connect-pg-simple";
 import MemoryStoreFactory from "memorystore";
@@ -33,20 +38,17 @@ export function getSession() {
   let sessionStore;
 
   if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-    // Manually create session table (createTableIfMissing reads a file from disk
-    // which doesn't exist in Vercel's serverless bundle)
-    pool.query(`
-      CREATE TABLE IF NOT EXISTS "session" (
-        "sid" varchar NOT NULL COLLATE "default",
-        "sess" json NOT NULL,
-        "expire" timestamp(6) NOT NULL,
-        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
-      )
-    `).catch((err: Error) => console.error("Session table creation error:", err));
-
-    sessionStore = new PostgresStore({
-      pool: pool,
-    });
+    try {
+      console.log("[auth] Initializing PostgresStore for sessions...");
+      sessionStore = new PostgresStore({
+        pool: pool,
+      });
+    } catch (err) {
+      console.error("[auth] Failed to initialize PostgresStore, falling back to MemoryStore:", err);
+      sessionStore = new MemoryStore({
+        checkPeriod: 86400000 
+      });
+    }
   } else {
     sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -54,16 +56,20 @@ export function getSession() {
   }
 
   return session({
-    secret: process.env.SESSION_SECRET || "default_secret",
+    secret: process.env.SESSION_SECRET || "asi20moto26",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    name: "asimoto_sid", // Specific name for the cookie
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true, // Always true for https on Vercel
+      sameSite: "lax",
       maxAge: sessionTtl,
+      path: "/",
     },
   });
+
 }
 
 export function setupAuth(app: Express) {
@@ -75,19 +81,31 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`[auth] Attempting login for user: ${username}`);
         const user = await authStorage.getUserByUsername(username);
+        
         if (!user) {
+          console.log(`[auth] Login failed: User ${username} not found.`);
           return done(null, false, { message: "Incorrect username." });
         }
-        if (!await comparePassword(user.password, password)) {
+        
+        console.log(`[auth] User ${username} found. Comparing passwords...`);
+        const isMatch = await comparePassword(user.password, password);
+        
+        if (!isMatch) {
+          console.log(`[auth] Login failed: Incorrect password for user ${username}.`);
           return done(null, false, { message: "Incorrect password." });
         }
+        
+        console.log(`[auth] Login successful for user: ${username}, role: ${user.role}`);
         return done(null, user);
       } catch (err) {
+        console.error(`[auth] CRITICAL ERROR during authentication:`, err);
         return done(err);
       }
     }),
   );
+
 
   passport.serializeUser((user: any, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {

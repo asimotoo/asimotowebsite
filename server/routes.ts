@@ -8,7 +8,9 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { hashPassword } from "./replit_integrations/auth";
 import nodemailer from "nodemailer";
+import { pool } from "./db";
 
 // Configure Multer for local file storage
 const upload = multer({
@@ -40,6 +42,21 @@ export async function registerRoutes(
   app.get("/api/ping", (_req, res) => {
     res.json({ message: "pong", timestamp: new Date().toISOString() });
   });
+
+  app.get("/api/diag/users", async (_req, res) => {
+    try {
+      const allUsers = await storage.getUserByUsername("asimotoibrahim71");
+      res.json({ 
+        adminExists: !!allUsers, 
+        adminRole: allUsers?.role,
+        adminUsername: allUsers?.username,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
 
   // Middleware to check if user is admin
   const isAdmin = (req: any, res: any, next: any) => {
@@ -452,74 +469,87 @@ export async function registerRoutes(
 }
 
 async function seedDatabase() {
-  const categories = await storage.getCategories();
-  if (categories.length === 0) {
-    // 1. Yedek Parça
-    await storage.createCategory({
-      name: "Yedek Parça",
-      slug: "yedek-parca",
-      imageUrl: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop"
-    });
-    // 2. Elektronik Ekipman
-    await storage.createCategory({
-      name: "Elektronik Ekipman",
-      slug: "elektronik-ekipman",
-      imageUrl: "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=500&auto=format&fit=crop"
-    });
-    // 3. Jant & Lastik
-    await storage.createCategory({
-      name: "Jant & Lastik",
-      slug: "jant-lastik",
-      imageUrl: "https://images.unsplash.com/photo-1589756823695-278bc923f962?w=500&auto=format&fit=crop"
-    });
-  }
-
-  // Seed Admin User
-  const adminUsername = "asimotoibrahim71";
-  const oldAdminUsername = "admin@asimoto.com";
-  const oldAdminUsername2 = "asimotoibrahim12";
-  
-  // Check for admin by new username or old default username
-  let existingAdmin = await storage.getUserByUsername(adminUsername);
-  if (!existingAdmin) {
-    existingAdmin = await storage.getUserByUsername(oldAdminUsername2);
-  }
-  if (!existingAdmin) {
-    existingAdmin = await storage.getUserByUsername(oldAdminUsername);
-  }
-  
-  // START TEMPORARY HASH GENERATION (Normally would import)
-  const { scrypt, randomBytes } = await import("crypto");
-  const { promisify } = await import("util");
-  const scryptAsync = promisify(scrypt);
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync("asi20moto26", salt, 64)) as Buffer;
-  const hash = `${buf.toString("hex")}.${salt}`;
-  // END TEMPORARY
+  try {
+    console.log("[seed] Starting seedDatabase...");
     
-  if (existingAdmin) {
-    // Update existing admin
-    await storage.upsertUser({
-      ...existingAdmin,
-      username: adminUsername,
-      password: hash,
-      role: "admin",
-      firstName: "Admin",
-      lastName: "User",
-      profileImageUrl: `https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff`
-    });
-    console.log(`Admin updated: ${adminUsername}`);
-  } else {
-    // Create new admin
-    await storage.upsertUser({
-      username: adminUsername,
-      email: "admin@asimoto.com", // Keeping email as fallback/required field
-      password: hash,
-      role: "admin",
-      firstName: "Admin",
-      lastName: "User",
-      profileImageUrl: `https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff`
-    });
-    console.log(`Admin created: ${adminUsername}`);
+    // Ensure session table exists
+    console.log("[seed] Ensuring session table exists...");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL,
+        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+      )
+    `);
+    console.log("[seed] Session table verified.");
+    const categories = await storage.getCategories();
+    if (categories.length === 0) {
+      console.log("[seed] Seeding categories...");
+      // 1. Yedek Parça
+      await storage.createCategory({
+        name: "Yedek Parça",
+        slug: "yedek-parca",
+        imageUrl: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop"
+      });
+      // 2. Elektronik Ekipman
+      await storage.createCategory({
+        name: "Elektronik Ekipman",
+        slug: "elektronik-ekipman",
+        imageUrl: "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=500&auto=format&fit=crop"
+      });
+      // 3. Jant & Lastik
+      await storage.createCategory({
+        name: "Jant & Lastik",
+        slug: "jant-lastik",
+        imageUrl: "https://images.unsplash.com/photo-1589756823695-278bc923f962?w=500&auto=format&fit=crop"
+      });
+      console.log("[seed] Categories seeded successfully.");
+    }
+
+    // Seed Admin User
+    const adminUsername = "asimotoibrahim71";
+    console.log(`[seed] Checking for admin user: ${adminUsername}`);
+    
+    // Check for admin by username
+    let existingAdmin = await storage.getUserByUsername(adminUsername);
+    
+    // START PASSWORD HASH GENERATION
+    console.log("[seed] Generating password hash...");
+    const hash = await hashPassword("asi20moto26");
+    console.log("[seed] Password hash generated.");
+    // END
+      
+    if (existingAdmin) {
+      console.log(`[seed] User ${adminUsername} exists, updating to ensure admin role and correct password.`);
+      // Update existing admin
+      await storage.upsertUser({
+        ...existingAdmin,
+        username: adminUsername,
+        password: hash,
+        role: "admin",
+        firstName: "Admin",
+        lastName: "User",
+        profileImageUrl: `https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff`
+      });
+      console.log(`[seed] Admin updated successfully: ${adminUsername}`);
+    } else {
+      console.log(`[seed] User ${adminUsername} does not exist, creating new admin account.`);
+      // Create new admin
+      await storage.upsertUser({
+        username: adminUsername,
+        email: "admin@asimoto.com",
+        password: hash,
+        role: "admin",
+        firstName: "Admin",
+        lastName: "User",
+        profileImageUrl: `https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff`
+      });
+      console.log(`[seed] Admin created successfully: ${adminUsername}`);
+    }
+    console.log("[seed] seedDatabase completed.");
+  } catch (error) {
+    console.error("[seed] CRITICAL ERROR during seedDatabase:", error);
   }
 }
+
