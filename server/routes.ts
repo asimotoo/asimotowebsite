@@ -505,71 +505,36 @@ async function seedDatabase() {
       )
     `);
     console.log("[seed] Session table verified.");
+
+    // Seed Categories
     const categories = await storage.getCategories();
     if (categories.length === 0) {
       console.log("[seed] Seeding categories...");
-      // 1. Yedek Parça
-      await storage.createCategory({
-        name: "Yedek Parça",
-        slug: "yedek-parca",
-        imageUrl: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop"
-      });
-      // 2. Elektronik Ekipman
-      await storage.createCategory({
-        name: "Elektronik Ekipman",
-        slug: "elektronik-ekipman",
-        imageUrl: "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=500&auto=format&fit=crop"
-      });
-      // 3. Jant & Lastik
-      await storage.createCategory({
-        name: "Jant & Lastik",
-        slug: "jant-lastik",
-        imageUrl: "https://images.unsplash.com/photo-1589756823695-278bc923f962?w=500&auto=format&fit=crop"
-      });
+      await storage.createCategory({ name: "Yedek Parça", slug: "yedek-parca", imageUrl: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop" });
+      await storage.createCategory({ name: "Elektronik Ekipman", slug: "elektronik-ekipman", imageUrl: "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=500&auto=format&fit=crop" });
+      await storage.createCategory({ name: "Jant & Lastik", slug: "jant-lastik", imageUrl: "https://images.unsplash.com/photo-1589756823695-278bc923f962?w=500&auto=format&fit=crop" });
       console.log("[seed] Categories seeded successfully.");
     }
 
     // Seed Admin User
     const adminUsername = "asimotoibrahim71";
-    console.log(`[seed] Checking for admin user: ${adminUsername}`);
+    const adminPassword = process.env.SESSION_SECRET || "asi20moto26";
+    console.log(`[seed] Initializing admin user: ${adminUsername} with secret fallback...`);
     
-    // Check for admin by username
-    let existingAdmin = await storage.getUserByUsername(adminUsername);
+    const hash = await hashPassword(adminPassword);
     
-    // START PASSWORD HASH GENERATION
-    console.log("[seed] Generating password hash...");
-    const hash = await hashPassword("asi20moto26");
-    console.log("[seed] Password hash generated.");
-    // END
-      
-    if (existingAdmin) {
-      console.log(`[seed] User ${adminUsername} exists, updating to ensure admin role and correct password.`);
-      // Update existing admin
-      await storage.upsertUser({
-        ...existingAdmin,
-        username: adminUsername,
-        password: hash,
-        role: "admin",
-        firstName: "Admin",
-        lastName: "User",
-        profileImageUrl: `https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff`
-      });
-      console.log(`[seed] Admin updated successfully: ${adminUsername}`);
-    } else {
-      console.log(`[seed] User ${adminUsername} does not exist, creating new admin account.`);
-      // Create new admin
-      await storage.upsertUser({
-        username: adminUsername,
-        email: "admin@asimoto.com",
-        password: hash,
-        role: "admin",
-        firstName: "Admin",
-        lastName: "User",
-        profileImageUrl: `https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff`
-      });
-      console.log(`[seed] Admin created successfully: ${adminUsername}`);
-    }
-    console.log("[seed] seedDatabase completed.");
+    await storage.upsertUser({
+      username: adminUsername,
+      email: "admin@asimoto.com",
+      password: hash,
+      role: "admin",
+      firstName: "Admin",
+      lastName: "User",
+      profileImageUrl: `https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff`
+    });
+    
+    console.log(`[seed] Admin account ${adminUsername} is ready.`);
+    console.log("[seed] seedDatabase completed successfully.");
   } catch (error) {
     console.error("[seed] CRITICAL ERROR during seedDatabase:", error);
   }

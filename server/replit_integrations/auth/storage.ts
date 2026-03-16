@@ -26,7 +26,7 @@ class AuthStorage implements IAuthStorage {
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
-        target: users.id,
+        target: users.username,
         set: {
           ...userData,
           updatedAt: new Date(),
