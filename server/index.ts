@@ -3,7 +3,6 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 const app = express();
-export { app };
 const httpServer = createServer(app);
 
 declare module "http" {
@@ -55,7 +54,7 @@ app.use((req, res, next) => {
 log("Server environment: " + process.env.NODE_ENV);
 log("Vercel environment: " + process.env.VERCEL);
 
-export const setupPromise = (async () => {
+const setupPromise = (async () => {
     try {
         log("Starting server setup...");
         await registerRoutes(httpServer, app);
@@ -81,12 +80,12 @@ export const setupPromise = (async () => {
     }
 })();
 
+export { app, setupPromise };
 export default app;
 
-// Vercel CJS compatibility — ensures module.exports = app
-// when bundled with format: "cjs"
+// Vercel CJS compatibility — ensures module.exports has what we need
 if (typeof module !== "undefined") {
-  module.exports = app;
+  module.exports = { app, setupPromise };
 }
 
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {

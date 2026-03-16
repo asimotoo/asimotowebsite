@@ -1,19 +1,25 @@
-import type { Request, Response } from "express";
-import { app, setupPromise } from "../server/index";
+import { app, setupPromise } from "./index";
 
-export default async function handler(req: Request, res: Response) {
-  console.log(`[handler] Incoming request: ${req.method} ${req.url}`);
+module.exports = async function handler(req: any, res: any) {
+  const startTime = Date.now();
+  console.log(`[Vercel Handler] request started: ${req.method} ${req.url}`);
+  
   try {
-    // Wait for the database and routes to be fully initialized
+    // Wait for the initialization promise (routes, auth setup, etc.)
     await setupPromise;
+    console.log(`[Vercel Handler] setupPromise resolved in ${Date.now() - startTime}ms`);
     
     // Pass the request to the Express application
     return app(req, res);
-
   } catch (err) {
-    console.error("Critical error in Vercel function handler:", err);
+    console.error("[Vercel Handler] CRITICAL INITIALIZATION ERROR:", err);
+    
     if (!res.headersSent) {
-      res.status(500).json({ error: "Internal Server Error during initialization" });
+      res.status(500).json({ 
+        error: "Internal Server Error during initialization",
+        details: err instanceof Error ? err.message : String(err),
+        timestamp: new Date().toISOString()
+      });
     }
   }
-}
+};
