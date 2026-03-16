@@ -1,6 +1,7 @@
-import { app, setupPromise } from "./index";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { app, setupPromise } from "../server/index";
 
-module.exports = async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
   console.log(`[Vercel Handler] request started: ${req.method} ${req.url}`);
   
@@ -22,4 +23,4 @@ module.exports = async function handler(req: any, res: any) {
       });
     }
   }
-};
+}
