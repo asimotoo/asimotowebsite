@@ -8,3 +8,7 @@ vite.config.ts.*
 *.tar.gz
 *.glb
 .vercel
+api/index.js
+api/index.cjs
+api/index.cjs.map
+api/index.js.map
