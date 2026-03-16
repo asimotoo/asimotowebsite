@@ -42,6 +42,8 @@ export function getSession() {
       console.log("[auth] Initializing PostgresStore for sessions...");
       sessionStore = new PostgresStore({
         pool: pool,
+        tableName: "session",
+        createTableIfMissing: true, // Let the store create it if needed
       });
     } catch (err) {
       console.error("[auth] Failed to initialize PostgresStore, falling back to MemoryStore:", err);

@@ -12,21 +12,14 @@ import { hashPassword } from "./replit_integrations/auth";
 import nodemailer from "nodemailer";
 import { pool } from "./db";
 
-// Configure Multer for local file storage
+import { put } from "@vercel/blob";
+
+// Configure Multer for memory storage (needed for Vercel Blob)
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      const uploadDir = path.join(process.cwd(), "attached_assets");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    },
-  }),
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
 });
 
 
@@ -95,8 +88,16 @@ export async function registerRoutes(
         return res.status(400).json({ message: "En az bir görsel gereklidir" });
       }
 
-      // Construct file URLs
-      const imageUrls = files.map(file => `/assets/${file.filename}`);
+      // Upload to Vercel Blob
+      const uploadPromises = files.map(async (file) => {
+        const filename = `${Date.now()}-${file.originalname}`;
+        const blob = await put(filename, file.buffer, {
+          access: "public",
+        });
+        return blob.url;
+      });
+
+      const imageUrls = await Promise.all(uploadPromises);
       const primaryImageUrl = imageUrls[0]; // Use first image as main/thumbnail
 
       // Parse body (it comes as text fields due to multipart)
@@ -219,7 +220,14 @@ export async function registerRoutes(
        let primaryImageUrl: string | undefined;
 
        if (files && files.length > 0) {
-         imageUrls = files.map(file => `/assets/${file.filename}`);
+         const uploadPromises = files.map(async (file) => {
+           const filename = `${Date.now()}-${file.originalname}`;
+           const blob = await put(filename, file.buffer, {
+             access: "public",
+           });
+           return blob.url;
+         });
+         imageUrls = await Promise.all(uploadPromises);
          primaryImageUrl = imageUrls[0];
        }
 
@@ -327,7 +335,14 @@ export async function registerRoutes(
   app.post("/api/motorcycles", isAdmin, upload.array("images"), async (req, res) => {
     try {
       const files = req.files as Express.Multer.File[];
-      const imageUrls = files.map(file => `/assets/${file.filename}`);
+      const uploadPromises = files.map(async (file: Express.Multer.File) => {
+        const filename = `${Date.now()}-${file.originalname}`;
+        const blob = await put(filename, file.buffer, {
+          access: "public",
+        });
+        return blob.url;
+      });
+      const imageUrls = await Promise.all(uploadPromises);
       
       const inputData = {
         brand: req.body.brand,
@@ -388,7 +403,14 @@ export async function registerRoutes(
       let imageUrls: string[] | undefined;
 
       if (files && files.length > 0) {
-        imageUrls = files.map(file => `/assets/${file.filename}`);
+        const uploadPromises = files.map(async (file: Express.Multer.File) => {
+          const filename = `${Date.now()}-${file.originalname}`;
+          const blob = await put(filename, file.buffer, {
+            access: "public",
+          });
+          return blob.url;
+        });
+        imageUrls = await Promise.all(uploadPromises);
       }
 
       const inputData: any = {
@@ -463,7 +485,7 @@ export async function registerRoutes(
   });
 
   // Seed database with categories and admin user
-  await seedDatabase();
+  seedDatabase().catch(err => console.error("[seed] Background seeding failed:", err));
 
   return httpServer;
 }
