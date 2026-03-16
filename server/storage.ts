@@ -7,7 +7,7 @@ import {
   type Motorcycle, type InsertMotorcycle,
   type Message, type InsertMessage,
   favorites, motorcycles, insertMotorcycleSchema // Added insertMotorcycleSchema
-} from "@shared/schema";
+} from "../shared/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { authStorage, type IAuthStorage } from "./replit_integrations/auth/storage"; // Import auth storage
 
