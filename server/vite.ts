@@ -8,8 +8,10 @@ import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
 
-// __dirname fix (ESM için)
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// __dirname fix (ESM & CJS compatibility)
+const __dirname = typeof __filename !== 'undefined'
+  ? path.dirname(__filename)
+  : path.dirname(fileURLToPath(import.meta.url));
 
 // 👉 Vite config yolu (Ana dizinde!)
 const viteConfigPath = path.resolve(__dirname, "../vite.config.ts");
