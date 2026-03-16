@@ -1,6 +1,6 @@
-const { app, setupPromise } = require("./index");
+import { app, setupPromise } from "./index";
 
-module.exports = async function (req, res) {
+export default async function handler(req: any, res: any) {
   const startTime = Date.now();
   console.log(`[Vercel Handler] request started: ${req.method} ${req.url}`);
   
@@ -22,4 +22,4 @@ module.exports = async function (req, res) {
       });
     }
   }
-};
+}

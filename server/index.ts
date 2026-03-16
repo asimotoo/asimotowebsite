@@ -83,11 +83,6 @@ const setupPromise = (async () => {
 export { app, setupPromise };
 export default app;
 
-// Vercel CJS compatibility — ensures module.exports has what we need
-if (typeof module !== "undefined") {
-  module.exports = { app, setupPromise };
-}
-
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   (async () => {
     await setupPromise;
