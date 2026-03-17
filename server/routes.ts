@@ -1,16 +1,16 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { storage } from "./storage";
-import { api } from "../shared/routes";
-import { insertMotorcycleSchema } from "../shared/schema";
+import { storage } from "./storage.js";
+import { api } from "../shared/routes.js";
+import { insertMotorcycleSchema } from "../shared/schema.js";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth/index.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { hashPassword } from "./replit_integrations/auth";
+import { hashPassword } from "./replit_integrations/auth/index.js";
 import nodemailer from "nodemailer";
-import { pool } from "./db";
+import { pool } from "./db.js";
 
 import { put } from "@vercel/blob";
 

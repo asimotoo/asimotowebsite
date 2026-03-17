@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db.js";
 import {
   users, categories, products, messages,
   type User, type UpsertUser,
@@ -7,9 +7,9 @@ import {
   type Motorcycle, type InsertMotorcycle,
   type Message, type InsertMessage,
   favorites, motorcycles, insertMotorcycleSchema // Added insertMotorcycleSchema
-} from "../shared/schema";
+} from "../shared/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
-import { authStorage, type IAuthStorage } from "./replit_integrations/auth/storage"; // Import auth storage
+import { authStorage, type IAuthStorage } from "./replit_integrations/auth/storage.js"; // Import auth storage
 
 export interface IStorage extends IAuthStorage {
   // Categories

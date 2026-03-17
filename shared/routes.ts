@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertFavoriteSchema, products, categories, messages, favorites } from './schema';
+import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertFavoriteSchema, products, categories, messages, favorites } from './schema.js';
 
-export * from './schema';
+export * from './schema.js';
 
 export const errorSchemas = {
   validation: z.object({

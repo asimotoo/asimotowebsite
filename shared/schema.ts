@@ -1,8 +1,8 @@
 import { pgTable, text, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users } from "./models/auth";
-export * from "./models/auth";
+import { users } from "./models/auth.js";
+export * from "./models/auth.js";
 
 export const categories = pgTable("categories", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),

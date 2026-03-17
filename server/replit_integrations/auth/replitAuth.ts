@@ -4,7 +4,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { authStorage } from "./storage";
+import { authStorage } from "./storage.js";
 
 const scryptAsync = promisify(scrypt);
 
@@ -28,7 +28,7 @@ export async function comparePassword(stored: string, supplied: string) {
 
 import PostgresStoreFactory from "connect-pg-simple";
 import MemoryStoreFactory from "memorystore";
-import { pool } from "../../db";
+import { pool } from "../../db.js";
 
 const PostgresStore = PostgresStoreFactory(session);
 const MemoryStore = MemoryStoreFactory(session);
