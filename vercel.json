@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "public": true,
-  "outputDirectory": "dist",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/(.*)",

@@ -38,16 +38,54 @@ export async function registerRoutes(
 
   app.get("/api/diag/users", async (_req, res) => {
     try {
-      const allUsers = await storage.getUserByUsername("asimotoibrahim71");
+      console.log("[diag] Running diagnostics...");
+      
+      // Test DB Connection
+      let dbOk = false;
+      try {
+        await pool.query("SELECT 1");
+        dbOk = true;
+      } catch (dbErr) {
+        console.error("[diag] DB Connection Failed:", dbErr);
+      }
+
+      const adminUser = await storage.getUserByUsername("asimotoibrahim71");
+      
       res.json({ 
-        adminExists: !!allUsers, 
-        adminRole: allUsers?.role,
-        adminUsername: allUsers?.username,
+        diagnostics: {
+          databaseConnection: dbOk ? "CONNECTED" : "FAILED",
+          environment: process.env.NODE_ENV,
+          vercelEnv: !!process.env.VERCEL
+        },
+        adminStatus: {
+          exists: !!adminUser, 
+          username: adminUser?.username,
+          role: adminUser?.role,
+          // Show last 4 chars of hash to verify seed worked without exposing full hash
+          hashSuffix: adminUser?.password ? `...${adminUser.password.slice(-4)}` : "NONE",
+          createdAt: adminUser?.createdAt,
+          updatedAt: adminUser?.updatedAt
+        },
+        request: {
+          url: _req.url,
+          headers: _req.headers["host"]
+        },
         timestamp: new Date().toISOString()
       });
     } catch (err) {
+      console.error("[diag] Diagnostics Error:", err);
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
+  });
+
+  // Explicit catch-all for /api for debugging
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({
+      error: "API route not found",
+      path: req.path,
+      method: req.method,
+      tip: "Check vercel.json and server/routes.ts mappings"
+    });
   });
 
 
