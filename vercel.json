@@ -3,9 +3,16 @@
   "functions": {
     "api/main.ts": {
       "includeFiles": "server/**,shared/**"
+    },
+    "api/diag-fs.ts": {
+      "includeFiles": "server/**,shared/**"
     }
   },
   "rewrites": [
+    {
+      "source": "/api/diag/fs",
+      "destination": "/api/diag-fs"
+    },
     {
       "source": "/api/diag/db",
       "destination": "/api/diag-db-standalone"
