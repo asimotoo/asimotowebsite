@@ -2,16 +2,10 @@
   "version": 2,
   "functions": {
     "api/main.ts": {
-      "includeFiles": [
-        "server/**",
-        "shared/**"
-      ]
+      "includeFiles": "{server,shared}/**"
     },
     "api/diag-fs.ts": {
-      "includeFiles": [
-        "server/**",
-        "shared/**"
-      ]
+      "includeFiles": "{server,shared}/**"
     }
   },
   "rewrites": [
