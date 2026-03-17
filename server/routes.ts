@@ -518,7 +518,7 @@ async function seedDatabase() {
 
     // Seed Admin User
     const adminUsername = "asimotoibrahim71";
-    const adminPassword = process.env.SESSION_SECRET || "asi20moto26";
+    const adminPassword = process.env.ADMIN_PASSWORD || "asi20moto26";
     console.log(`[seed] Initializing admin user: ${adminUsername} with secret fallback...`);
     
     const hash = await hashPassword(adminPassword);
