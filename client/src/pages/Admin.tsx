@@ -77,7 +77,53 @@ export default function Admin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [openBrand, setOpenBrand] = useState(false);
+
+  const compressImage = async (file: File): Promise<File | Blob> => {
+    // Only compress images
+    if (!file.type.startsWith("image/")) return file;
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1600; // Good balance for quality/size
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = (height * MAX_WIDTH) / width;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                // Return a new file with same name but compressed
+                resolve(new File([blob], file.name, { type: "image/jpeg" }));
+              } else {
+                resolve(file); // Fallback to original
+              }
+            },
+            "image/jpeg",
+            0.85 // 85% quality is standard for high-quality web images
+          );
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
+  };
 
   // Protect route
   if (!isLoading && (!user || user.role !== "admin")) {
@@ -507,8 +553,8 @@ export default function Admin() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={createProductMutation.isPending}>
-                  {createProductMutation.isPending ? "Oluşturuluyor..." : "Ürünü Oluştur"}
+                <Button type="submit" className="w-full" disabled={createProductMutation.isPending || isCompressing}>
+                  {isCompressing ? "Görseller Hazırlanıyor..." : createProductMutation.isPending ? "Oluşturuluyor..." : "Ürünü Oluştur"}
                 </Button>
               </form>
             </CardContent>
