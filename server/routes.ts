@@ -27,10 +27,16 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  console.log("[routes] registerRoutes START");
+
   // Setup Auth FIRST
-  await setupAuth(app);
+  console.log("[routes] Point 1: setupAuth...");
+  setupAuth(app);
+  
+  console.log("[routes] Point 2: registerAuthRoutes...");
   registerAuthRoutes(app);
 
+  console.log("[routes] Point 3: diagnostic routes...");
   // Debug route for Vercel
   app.get("/api/ping", (_req, res) => {
     res.json({ message: "pong", timestamp: new Date().toISOString() });

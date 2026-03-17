@@ -39,21 +39,24 @@ export function getSession() {
 
   if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
     try {
-      console.log("[auth] Initializing PostgresStore for sessions...");
+      console.log("[auth] Initializing PostgresStore with pool connection...");
       sessionStore = new PostgresStore({
         pool: pool,
         tableName: "session",
-        createTableIfMissing: true, // Let the store create it if needed
+        createTableIfMissing: false, // Table creation is handled in server/routes.ts seedDatabase
       });
+      console.log("[auth] PostgresStore initialized.");
     } catch (err) {
-      console.error("[auth] Failed to initialize PostgresStore, falling back to MemoryStore:", err);
+      console.error("[auth] FATAL PostgresStore initialization error:", err);
+      console.log("[auth] FALLBACK: Initializing MemoryStore instead.");
       sessionStore = new MemoryStore({
         checkPeriod: 86400000 
       });
     }
   } else {
+    console.log("[auth] Initializing MemoryStore (Development mode)...");
     sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+      checkPeriod: 86400000
     });
   }
 
@@ -75,11 +78,17 @@ export function getSession() {
 }
 
 export function setupAuth(app: Express) {
+  console.log("[auth] setupAuth START");
   app.set("trust proxy", 1);
+  
+  console.log("[auth] Configuring session middleware...");
   app.use(getSession());
+  
+  console.log("[auth] Initializing passport...");
   app.use(passport.initialize());
   app.use(passport.session());
 
+  console.log("[auth] Configuring LocalStrategy...");
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
