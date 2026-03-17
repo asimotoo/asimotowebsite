@@ -704,8 +704,8 @@ export default function Admin() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={createMotoMutation.isPending}>
-                  {createMotoMutation.isPending ? "Oluşturuluyor..." : "İlanı Oluştur"}
+                <Button type="submit" className="w-full" disabled={createMotoMutation.isPending || isCompressing}>
+                  {isCompressing ? "Görseller Hazırlanıyor..." : createMotoMutation.isPending ? "Oluşturuluyor..." : "İlanı Oluştur"}
                 </Button>
 
               </form>
