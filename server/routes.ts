@@ -526,8 +526,10 @@ export async function registerRoutes(
     }
   });
 
-  // Seed database with categories and admin user
-  seedDatabase().catch(err => console.error("[seed] Background seeding failed:", err));
+  // Seed the database with initial categories and admin user
+  console.log("[db] Starting seedDatabase phase...");
+  await seedDatabase()
+.catch(err => console.error("[seed] Background seeding failed:", err));
 
   return httpServer;
 }

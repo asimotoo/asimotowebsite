@@ -11,9 +11,9 @@ export const pool = new pg.Pool({
   ssl: {
     rejectUnauthorized: false
   },
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  max: 1, // Minimize connections in serverless handler
+  idleTimeoutMillis: 1000, // Close idle clients fast
+  connectionTimeoutMillis: 2000, // Fail fast if DB is unreachable
 });
 
 pool.on('error', (err) => {
