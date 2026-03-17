@@ -36,6 +36,10 @@ export async function registerRoutes(
     res.json({ message: "pong", timestamp: new Date().toISOString() });
   });
 
+  app.get("/api/diag/simple", (_req, res) => {
+    res.json({ status: "alive", time: new Date().toISOString(), vercel: !!process.env.VERCEL });
+  });
+
   app.get("/api/diag/users", async (_req, res) => {
     try {
       console.log("[diag] Running diagnostics...");
