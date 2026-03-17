@@ -12,3 +12,5 @@ api/index.js
 api/index.cjs
 api/index.cjs.map
 api/index.js.map
+api/server
+api/shared
