@@ -76,7 +76,8 @@ const setupPromise = (async () => {
         return app;
     } catch (error) {
         console.error("Critical: Server setup failed!", error);
-        throw error;
+        // Do not re-throw here to prevent module import crashes on Vercel
+        return app;
     }
 })();
 
