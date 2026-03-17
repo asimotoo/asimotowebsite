@@ -185,9 +185,17 @@ export default function Admin() {
       formData.append("isFeatured", data.isFeatured.toString());
       
       if (selectedFiles.length > 0) {
-        selectedFiles.forEach((file) => {
-          formData.append("images", file);
-        });
+        setIsCompressing(true);
+        try {
+          const compressedFiles = await Promise.all(
+            selectedFiles.map(file => compressImage(file))
+          );
+          compressedFiles.forEach((file) => {
+            formData.append("images", file);
+          });
+        } finally {
+          setIsCompressing(false);
+        }
       }
 
       const res = await fetch(api.products.create.path, {
@@ -238,9 +246,17 @@ export default function Admin() {
       formData.append("description", data.description);
       
       if (selectedFiles.length > 0) {
-        selectedFiles.forEach((file) => {
-          formData.append("images", file);
-        });
+        setIsCompressing(true);
+        try {
+          const compressedFiles = await Promise.all(
+            selectedFiles.map(file => compressImage(file))
+          );
+          compressedFiles.forEach((file) => {
+            formData.append("images", file);
+          });
+        } finally {
+          setIsCompressing(false);
+        }
       }
 
       const res = await fetch("/api/motorcycles", {
