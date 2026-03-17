@@ -88,17 +88,6 @@ export async function registerRoutes(
     }
   });
 
-  // Explicit catch-all for /api for debugging
-  app.all("/api/*", (req, res) => {
-    res.status(404).json({
-      error: "API route not found",
-      path: req.path,
-      method: req.method,
-      tip: "Check vercel.json and server/routes.ts mappings"
-    });
-  });
-
-
   // Middleware to check if user is admin
   const isAdmin = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated() || (req.user as any).role !== "admin") {
@@ -106,6 +95,45 @@ export async function registerRoutes(
     }
     next();
   };
+
+  // Diagnostic route for reading error logs
+  app.get("/api/diag/error-logs", isAdmin, async (_req, res) => {
+    try {
+      const fs = await import('fs');
+      const files = ['debug_post_product_error.json', 'debug_post_motorcycle_error.json', 'debug_error.json', 'error.json'];
+      const logs: Record<string, any> = {};
+      
+      for (const file of files) {
+        if (fs.existsSync(file)) {
+          try {
+            logs[file] = JSON.parse(fs.readFileSync(file, 'utf8'));
+          } catch (e) {
+            logs[file] = "Error parsing JSON";
+          }
+        }
+      }
+      
+      res.json(logs);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // Explicit catch-all for /api for debugging (placed AFTER specific routes)
+  app.all("/api/*", (req, res, next) => {
+    // If it's a known non-diag route, let it pass to the actual handlers below
+    const knownPrefixes = ["/api/products", "/api/motorcycles", "/api/messages", "/api/categories", "/api/favorites", "/api/diag"];
+    if (knownPrefixes.some(p => req.path.startsWith(p))) {
+      return next();
+    }
+    
+    res.status(404).json({
+      error: "API route not found",
+      path: req.path,
+      method: req.method,
+      tip: "Check vercel.json and server/routes.ts mappings"
+    });
+  });
 
   // Serve attached assets
   app.use("/assets", (req, res, next) => {
@@ -138,7 +166,11 @@ export async function registerRoutes(
 
       // Upload to Vercel Blob
       const uploadPromises = files.map(async (file) => {
-        const filename = `${Date.now()}-${file.originalname}`;
+        // Sanitize filename: remove non-alphanumeric (keep dots/hyphens), replace spaces with hyphens
+        const sanitizedOriginalName = file.originalname
+          .replace(/\s+/g, '-')
+          .replace(/[^a-zA-Z0-9.-]/g, '');
+        const filename = `${Date.now()}-${sanitizedOriginalName}`;
         const blob = await put(filename, file.buffer, {
           access: "public",
         });
@@ -167,9 +199,30 @@ export async function registerRoutes(
       res.status(201).json(product);
     } catch (err) {
       console.error("POST /api/products Error:", err);
+      
+      // LOG ERROR TO FILE FOR DIAGNOSTICS
+      try {
+        const fs = await import('fs');
+        const errorLog = {
+          timestamp: new Date().toISOString(),
+          route: "POST /api/products",
+          error: err instanceof Error ? err.message : String(err),
+          // @ts-ignore
+          stack: err.stack,
+          // @ts-ignore
+          zodErrors: err instanceof z.ZodError ? err.errors : null,
+          body: req.body,
+          files_count: (req.files as any)?.length || 0
+        };
+        fs.writeFileSync('debug_post_product_error.json', JSON.stringify(errorLog, null, 2));
+      } catch (logErr) {
+        console.error("Failed to write product error log:", logErr);
+      }
+
       if (err instanceof z.ZodError) {
+        console.error("Zod Error Details:", JSON.stringify(err.errors, null, 2));
         return res.status(400).json({
-          message: err.errors[0].message,
+          message: `${err.errors[0].path.join('.')} - ${err.errors[0].message}`,
           field: err.errors[0].path.join('.'),
         });
       }
@@ -384,7 +437,10 @@ export async function registerRoutes(
     try {
       const files = req.files as Express.Multer.File[];
       const uploadPromises = files.map(async (file: Express.Multer.File) => {
-        const filename = `${Date.now()}-${file.originalname}`;
+        const sanitizedOriginalName = file.originalname
+          .replace(/\s+/g, '-')
+          .replace(/[^a-zA-Z0-9.-]/g, '');
+        const filename = `${Date.now()}-${sanitizedOriginalName}`;
         const blob = await put(filename, file.buffer, {
           access: "public",
         });
@@ -420,14 +476,25 @@ export async function registerRoutes(
       res.status(201).json(moto);
     } catch (err) {
       console.error("POST /api/motorcycles Error:", err);
-      // Log error to file
-      const fs = await import('fs');
-      fs.writeFileSync('debug_error.json', JSON.stringify({
-        error: err,
-        message: err instanceof Error ? err.message : String(err),
-        isZod: err instanceof z.ZodError,
-        zodErrors: err instanceof z.ZodError ? err.errors : null
-      }, null, 2));
+      
+      // LOG ERROR TO FILE FOR DIAGNOSTICS
+      try {
+        const fs = await import('fs');
+        const errorLog = {
+          timestamp: new Date().toISOString(),
+          route: "POST /api/motorcycles",
+          error: err instanceof Error ? err.message : String(err),
+          // @ts-ignore
+          stack: err.stack,
+          // @ts-ignore
+          zodErrors: err instanceof z.ZodError ? err.errors : null,
+          body: req.body,
+          files_count: (req.files as any)?.length || 0
+        };
+        fs.writeFileSync('debug_post_motorcycle_error.json', JSON.stringify(errorLog, null, 2));
+      } catch (logErr) {
+        console.error("Failed to write motorcycle error log:", logErr);
+      }
 
       if (err instanceof z.ZodError) {
         console.error("Zod Error Details:", JSON.stringify(err.errors, null, 2));
