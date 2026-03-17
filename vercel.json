@@ -2,6 +2,10 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/api/diag/db",
+      "destination": "/api/diag-db-standalone"
+    },
+    {
       "source": "/api/diag-test",
       "destination": "/api/diag-test.js"
     },
