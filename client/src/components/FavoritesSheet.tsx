@@ -1,3 +1,4 @@
+import React from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Heart, Trash2, ShoppingCart, ArrowRight } from "lucide-react";
@@ -6,7 +7,7 @@ import { useCart } from "@/lib/cart-store";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
-export function FavoritesSheet() {
+export function FavoritesSheet({ trigger }: { trigger?: React.ReactNode }) {
   const { favorites, removeFavorite } = useFavorites();
   const addToCart = useCart((state) => state.addToCart);
   const { toast } = useToast();
@@ -22,14 +23,16 @@ export function FavoritesSheet() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="hidden sm:flex text-black hover:text-[#17BA4C] dark:text-white dark:hover:text-[#17BA4C] relative">
-          <Heart className="w-5 h-5" />
-          {favorites.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#17BA4C] text-[10px] text-white flex items-center justify-center rounded-full font-bold">
-              {favorites.length}
-            </span>
-          )}
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon" className="flex text-black hover:text-[#17BA4C] dark:text-white dark:hover:text-[#17BA4C] relative">
+            <Heart className="w-5 h-5" />
+            {favorites.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#17BA4C] text-[10px] text-white flex items-center justify-center rounded-full font-bold">
+                {favorites.length}
+              </span>
+            )}
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md flex flex-col h-full">
         <SheetHeader className="space-y-2.5 pb-4 border-b border-gray-100 dark:border-slate-800">

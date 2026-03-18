@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Search, User, ShoppingCart, Menu, X } from "lucide-react";
+import { Search, User, ShoppingCart, Menu, X, Heart } from "lucide-react";
 import logo from "../assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -121,7 +121,13 @@ export function Header() {
                   </Link>
                 ))}
                 
-                <FavoritesSheet />
+                <FavoritesSheet 
+                  trigger={
+                    <button className="text-lg font-bold px-4 py-3 rounded-lg text-black dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-left flex items-center gap-2">
+                      <Heart className="w-5 h-5 text-[#17BA4C]" /> Favorilerim
+                    </button>
+                  } 
+                />
                 
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
                   {user ? (
