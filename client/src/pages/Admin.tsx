@@ -20,7 +20,7 @@ import { type Message } from "@shared/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { Check, Mail, Package, MessageSquare, ChevronsUpDown, Trash2, Bike } from "lucide-react";
+import { Check, Mail, Plus, Trash2, MessageSquare, Package, ChevronRight, LogOut, Image, X, Bike } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +77,7 @@ export default function Admin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
   const [openBrand, setOpenBrand] = useState(false);
 
@@ -221,6 +222,7 @@ export default function Admin() {
       });
       form.reset();
       setSelectedFiles([]);
+      setPreviews([]);
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
     },
     onError: (error: Error) => {
@@ -282,6 +284,7 @@ export default function Admin() {
       });
       motoForm.reset();
       setSelectedFiles([]);
+      setPreviews([]);
     },
     onError: (error: Error) => {
       toast({
@@ -346,9 +349,29 @@ export default function Admin() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+      const newFiles = Array.from(e.target.files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+      
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPreviews(prev => [...prev, ...newPreviews]);
     }
+    // Reset input value so it allows selecting the same file again if deleted
+    e.target.value = '';
   };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    // Revoke the URL to avoid memory leaks
+    URL.revokeObjectURL(previews[index]);
+    setPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Cleanup effect for object URLs
+  useEffect(() => {
+    return () => {
+      previews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [previews]);
 
   return (
     <div className="container mx-auto py-10 px-4">
@@ -567,15 +590,31 @@ export default function Admin() {
                   />
                   <p className="text-sm text-muted-foreground">Birden fazla fotoğraf veya video seçebilirsiniz.</p>
                   {selectedFiles.length > 0 && (
-                     <div className="text-sm font-medium mt-2">
-                        {selectedFiles.length} dosya seçildi:
-                        <ul className="list-disc list-inside mt-1 text-xs text-muted-foreground">
-                          {selectedFiles.slice(0, 5).map((f, i) => (
-                            <li key={i}>{f.name}</li>
-                          ))}
-                          {selectedFiles.length > 5 && <li>...ve {selectedFiles.length - 5} diğer</li>}
-                        </ul>
-                     </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-4">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800">
+                          {file.type.startsWith("image/") ? (
+                            <img 
+                              src={previews[index]} 
+                              alt={`preview-${index}`} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-xs p-2 text-center">
+                              <Package className="w-8 h-8 mb-1 opacity-20" />
+                              <span className="truncate w-full">{file.name}</span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -724,9 +763,31 @@ export default function Admin() {
                     className="bg-white dark:bg-slate-900 text-black dark:text-white"
                   />
                   {selectedFiles.length > 0 && (
-                     <div className="text-sm text-muted-foreground mt-2">
-                        {selectedFiles.length} dosya seçildi
-                     </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-4">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800">
+                          {file.type.startsWith("image/") ? (
+                            <img 
+                              src={previews[index]} 
+                              alt={`preview-${index}`} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-xs p-2 text-center">
+                              <Package className="w-8 h-8 mb-1 opacity-20" />
+                              <span className="truncate w-full">{file.name}</span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
