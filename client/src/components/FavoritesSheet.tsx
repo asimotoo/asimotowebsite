@@ -1,7 +1,7 @@
 import React from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Heart, Trash2, ShoppingCart, ArrowRight } from "lucide-react";
+import { Heart, Trash2, ShoppingCart, ArrowRight, X } from "lucide-react";
 import { useFavorites } from "@/lib/favorites-store";
 import { useCart } from "@/lib/cart-store";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +34,18 @@ export function FavoritesSheet({ trigger }: { trigger?: React.ReactNode }) {
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md flex flex-col h-full">
+      <SheetContent className="w-full sm:max-w-md flex flex-col h-full border-l-0 sm:border-l">
+        <SheetClose asChild>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute right-4 top-4 z-50 rounded-full bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Kapat</span>
+          </Button>
+        </SheetClose>
+
         <SheetHeader className="space-y-2.5 pb-4 border-b border-gray-100 dark:border-slate-800">
           <SheetTitle className="text-xl font-bold flex items-center gap-2">
             <Heart className="w-5 h-5 text-[#17BA4C] fill-current" />

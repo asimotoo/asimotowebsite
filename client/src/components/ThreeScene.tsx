@@ -1,7 +1,27 @@
 import { useRef, Suspense, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Html, ContactShadows, PresentationControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+
+function ResponsiveCamera({ isMobile }: { isMobile: boolean }) {
+  const { camera } = useThree();
+  
+  useLayoutEffect(() => {
+    if (isMobile) {
+      camera.position.set(0, -0.5, 15);
+      (camera as THREE.PerspectiveCamera).fov = 30;
+    } else {
+      camera.position.set(0, 2, 10);
+      (camera as THREE.PerspectiveCamera).fov = 35;
+    }
+    camera.updateProjectionMatrix();
+  }, [isMobile, camera]);
+
+  return null;
+}
+
+// Separate component for useLayoutEffect since it's not available in fiber by default
+import { useLayoutEffect } from "react";
 
 function YamahaR1Model({ isMobile }: { isMobile: boolean }) {
   const { scene } = useGLTF("https://6ndngeh9a2b4fffw.public.blob.vercel-storage.com/2022_yamaha_r1.glb");
@@ -38,7 +58,6 @@ export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -49,12 +68,9 @@ export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
         shadows 
         dpr={[1, 2]} 
         gl={{ antialias: true, alpha: true }}
-        camera={{ 
-          position: isMobile ? [0, -0.5, 15] : [0, 2, 10], 
-          fov: isMobile ? 30 : 35
-        }}
         className="bg-transparent"
       >
+        <ResponsiveCamera isMobile={isMobile} />
         <Environment preset="city" background={false} />
         
         <ambientLight intensity={0.5} />
@@ -80,7 +96,7 @@ export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
           >
              <YamahaR1Model isMobile={isMobile} />
              <ContactShadows 
-               position={[0, -0.6, 0]} 
+               position={isMobile ? [0, -2.8, 0] : [0, -0.6, 0]} 
                opacity={0.15} 
                scale={80} 
                blur={3} 

@@ -240,8 +240,8 @@ export default function Admin() {
       form.reset();
       setSelectedFiles([]);
       setPreviews([]);
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/motorcycles"] });
+      queryClient.resetQueries({ queryKey: ["/api/products"] });
+      queryClient.resetQueries({ queryKey: ["/api/motorcycles"] });
     },
     onError: (error: Error) => {
       toast({
@@ -305,8 +305,8 @@ export default function Admin() {
       motoForm.reset();
       setSelectedFiles([]);
       setPreviews([]);
-      queryClient.invalidateQueries({ queryKey: ["/api/motorcycles"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.resetQueries({ queryKey: ["/api/motorcycles"] });
+      queryClient.resetQueries({ queryKey: ["/api/products"] });
     },
     onError: (error: Error) => {
       toast({
@@ -364,8 +364,8 @@ export default function Admin() {
       if (!res.ok) throw new Error("Silme işlemi başarısız");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/motorcycles"] });
+      queryClient.resetQueries({ queryKey: ["/api/products"] });
+      queryClient.resetQueries({ queryKey: ["/api/motorcycles"] });
       toast({
         title: "Başarılı",
         description: "Ürün başarıyla silindi",
