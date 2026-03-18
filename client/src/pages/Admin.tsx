@@ -343,6 +343,16 @@ export default function Admin() {
     queryKey: ["/api/products"],
   });
 
+  // Fetch Motorcycles
+  const { data: motorcycles } = useQuery<any[]>({
+    queryKey: ["/api/motorcycles"],
+  });
+
+  const productCounts = categories.reduce((acc: any, cat: any) => {
+    acc[cat.name] = products?.filter(p => p.categoryId === cat.id).length || 0;
+    return acc;
+  }, {});
+
   const deleteProductMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await fetch(`/api/products/${id}`, {
@@ -825,6 +835,23 @@ export default function Admin() {
               <CardTitle className="text-black dark:text-white">Ürün Listesi</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Toplam Motosiklet</p>
+                    <p className="text-3xl font-bold text-primary">{motorcycles?.length || 0}</p>
+                  </CardContent>
+                </Card>
+                {Object.entries(productCounts).map(([name, count]: [string, any]) => (
+                  <Card key={name} className="bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-800">
+                    <CardContent className="pt-6 text-center">
+                      <p className="text-sm text-muted-foreground mb-1">{name}</p>
+                      <p className="text-3xl font-bold text-black dark:text-white">{count}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
               <div className="rounded-md border border-gray-200 dark:border-slate-800">
                 <Table>
                   <TableHeader>

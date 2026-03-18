@@ -121,6 +121,8 @@ export function Header() {
                   </Link>
                 ))}
                 
+                <FavoritesSheet />
+                
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
                   {user ? (
                     <>
