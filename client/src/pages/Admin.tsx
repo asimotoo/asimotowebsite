@@ -85,15 +85,24 @@ export default function Admin() {
     // Only compress images
     if (!file.type.startsWith("image/")) return file;
     
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
+      
+      const sanitizeFilename = (name: string) => {
+        // Remove non-ASCII characters and replace spaces with hyphens
+        return name
+          .replace(/[^\x00-\x7F]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/[^a-zA-Z0-9.-]/g, "");
+      };
+
       reader.onload = (event) => {
-        const img = new Image();
+        // Use window.Image to be absolutely sure we don't use the Lucide icon
+        const img = new window.Image();
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX_WIDTH = 1600; // Good balance for quality/size
+          const MAX_WIDTH = 1200; 
           let width = img.width;
           let height = img.height;
 
@@ -110,19 +119,25 @@ export default function Admin() {
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                // Return a new file with same name but compressed
-                resolve(new File([blob], file.name, { type: "image/jpeg" }));
+                const sanitizedName = sanitizeFilename(file.name) || `upload-${Date.now()}.jpg`;
+                try {
+                  // Fallback for older Safari or restricted environments
+                  resolve(new File([blob], sanitizedName, { type: "image/jpeg" }));
+                } catch (e) {
+                  resolve(blob);
+                }
               } else {
-                resolve(file); // Fallback to original
+                resolve(file);
               }
             },
             "image/jpeg",
-            0.85 // 85% quality is standard for high-quality web images
+            0.75
           );
         };
         img.onerror = () => resolve(file);
       };
       reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
     });
   };
 
@@ -196,7 +211,9 @@ export default function Admin() {
             selectedFiles.map(file => compressImage(file))
           );
           compressedFiles.forEach((file) => {
-            formData.append("images", file);
+            // Ensure we have a valid filename for FormData.append
+            const filename = (file as File).name || `img-${Date.now()}.jpg`;
+            formData.append("images", file, filename);
           });
         } finally {
           setIsCompressing(false);
@@ -258,7 +275,9 @@ export default function Admin() {
             selectedFiles.map(file => compressImage(file))
           );
           compressedFiles.forEach((file) => {
-            formData.append("images", file);
+            // Ensure we have a valid filename for FormData.append
+            const filename = (file as File).name || `img-${Date.now()}.jpg`;
+            formData.append("images", file, filename);
           });
         } finally {
           setIsCompressing(false);

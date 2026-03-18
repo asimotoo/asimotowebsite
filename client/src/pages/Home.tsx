@@ -95,7 +95,7 @@ export default function Home() {
           </div>
 
           <motion.div 
-            className="relative h-[400px] lg:h-[900px] flex items-center justify-center order-first lg:order-last translate-y-8 sm:translate-y-0"
+            className="relative h-[400px] lg:h-[900px] flex items-center justify-center order-first lg:order-last"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1 }}

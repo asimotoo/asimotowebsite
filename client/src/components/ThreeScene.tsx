@@ -48,8 +48,8 @@ export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
         dpr={[1, 2]} 
         gl={{ antialias: true, alpha: true }}
         camera={{ 
-          position: isMobile ? [0, 1.5, 12] : [1, 2.5, 8], 
-          fov: isMobile ? 35 : 35
+          position: isMobile ? [0, 0.8, 15] : [1, 2.5, 8], 
+          fov: isMobile ? 30 : 35
         }}
         className="bg-transparent"
       >
