@@ -200,25 +200,6 @@ export async function registerRoutes(
     } catch (err) {
       console.error("POST /api/products Error:", err);
       
-      // LOG ERROR TO FILE FOR DIAGNOSTICS
-      try {
-        const fs = await import('fs');
-        const errorLog = {
-          timestamp: new Date().toISOString(),
-          route: "POST /api/products",
-          error: err instanceof Error ? err.message : String(err),
-          // @ts-ignore
-          stack: err.stack,
-          // @ts-ignore
-          zodErrors: err instanceof z.ZodError ? err.errors : null,
-          body: req.body,
-          files_count: (req.files as any)?.length || 0
-        };
-        fs.writeFileSync('debug_post_product_error.json', JSON.stringify(errorLog, null, 2));
-      } catch (logErr) {
-        console.error("Failed to write product error log:", logErr);
-      }
-
       if (err instanceof z.ZodError) {
         console.error("Zod Error Details:", JSON.stringify(err.errors, null, 2));
         return res.status(400).json({
@@ -361,25 +342,6 @@ export async function registerRoutes(
        res.json(updatedProduct);
     } catch (err) {
       console.error("PUT /api/products/:id Error:", err);
-      try {
-         const fs = await import('fs');
-         const path = await import('path');
-         const logPath = '/Users/yusuferkan/Downloads/Asi-Moto-Store/error.json';
-         const errorLog = {
-            timestamp: new Date().toISOString(),
-            error: err instanceof Error ? err.message : String(err),
-            // @ts-ignore
-            stack: err.stack,
-            // @ts-ignore
-            zodErrors: err instanceof z.ZodError ? err.errors : null,
-            body: req.body,
-            files: req.files
-         };
-         fs.writeFileSync(logPath, JSON.stringify(errorLog, null, 2));
-      } catch (logErr) {
-         console.error("Failed to write log file:", logErr);
-      }
-
       if (err instanceof z.ZodError) {
         console.error("Zod Error Details:", JSON.stringify(err.errors, null, 2));
         const errorMessage = `Zod Error: ${err.errors[0].path.join('.')} - ${err.errors[0].message}`;
@@ -465,10 +427,6 @@ export async function registerRoutes(
         images: JSON.stringify(imageUrls),
       };
 
-      // Log input data for debugging
-      const fs = await import('fs');
-      fs.writeFileSync('debug_input.json', JSON.stringify(inputData, null, 2));
-
       // Explicitly parse with Zod to catch validation errors
       const validatedData = insertMotorcycleSchema.parse(inputData);
 
@@ -477,25 +435,6 @@ export async function registerRoutes(
     } catch (err) {
       console.error("POST /api/motorcycles Error:", err);
       
-      // LOG ERROR TO FILE FOR DIAGNOSTICS
-      try {
-        const fs = await import('fs');
-        const errorLog = {
-          timestamp: new Date().toISOString(),
-          route: "POST /api/motorcycles",
-          error: err instanceof Error ? err.message : String(err),
-          // @ts-ignore
-          stack: err.stack,
-          // @ts-ignore
-          zodErrors: err instanceof z.ZodError ? err.errors : null,
-          body: req.body,
-          files_count: (req.files as any)?.length || 0
-        };
-        fs.writeFileSync('debug_post_motorcycle_error.json', JSON.stringify(errorLog, null, 2));
-      } catch (logErr) {
-        console.error("Failed to write motorcycle error log:", logErr);
-      }
-
       if (err instanceof z.ZodError) {
         console.error("Zod Error Details:", JSON.stringify(err.errors, null, 2));
         return res.status(400).json({
