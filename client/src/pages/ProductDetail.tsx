@@ -8,6 +8,7 @@ import { ChevronRight, Minus, Plus, ShoppingCart, Star, Truck, Shield, RotateCcw
 import { Link } from "wouter";
 import { useCart } from "@/lib/cart-store";
 import { useFavorites } from "@/lib/favorites-store";
+import { FaWhatsapp } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -638,8 +639,9 @@ export default function ProductDetail() {
                 href="https://wa.me/905526692332" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-2xl font-black text-[#17BA4C] animate-flash hover:underline block"
+                className="text-2xl font-black text-[#17BA4C] animate-flash hover:underline flex items-center justify-center gap-2"
               >
+                <FaWhatsapp className="w-8 h-8" />
                 WHATSAPP: 0552 669 23 32
               </a>
               <p className="text-sm text-muted-foreground mt-1">Stok Sorunuz</p>
