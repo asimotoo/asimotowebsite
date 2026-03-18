@@ -56,14 +56,14 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               >
-              <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-black leading-none mb-8 tracking-tighter text-black dark:text-white drop-shadow-sm">
+              <h1 className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-none mb-6 tracking-tighter text-black dark:text-white drop-shadow-sm text-center md:text-left">
                 TÜRKİYE'NİN <br />
                 <span className="text-black dark:text-white">
                   EN BÜYÜK
                 </span> <br />
                 YEDEK PARÇA TEDARİKÇİSİ
               </h1>
-              <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 max-w-lg leading-relaxed mb-10 mx-auto md:mx-0 font-medium">
+              <p className="text-lg md:text-2xl text-gray-700 dark:text-gray-300 max-w-lg leading-relaxed mb-10 mx-auto md:mx-0 font-medium text-center md:text-left">
                 Aradığınız tüm orijinal ve yan sanayi yedek parçalar, aksesuarlar ve ekipmanlar burada.
               </p>
             </motion.div>
@@ -98,7 +98,7 @@ export default function Home() {
           </div>
 
           <motion.div 
-            className="relative lg:h-[900px] flex items-center justify-center"
+            className="relative h-[400px] lg:h-[900px] flex items-center justify-center order-first lg:order-last"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1 }}
@@ -107,7 +107,7 @@ export default function Home() {
                 <ThreeScene scrollProgress={scrollYProgress} />
              </div>
              {/* Decorative glow behind the 3D model */}
-             <div className="absolute inset-0 bg-primary/20 rounded-full blur-[100px] -z-10 dark:bg-primary/10" />
+             <div className="absolute inset-0 bg-primary/20 rounded-full blur-[60px] md:blur-[100px] -z-10 dark:bg-primary/10" />
           </motion.div>
         </div>
       </section>

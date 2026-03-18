@@ -28,12 +28,19 @@ function YamahaR1Model() {
 
 export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
   return (
-    <div className="w-full h-full min-h-[750px] bg-transparent">
+  // Dynamic camera and scale based on screen width
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  return (
+    <div className="w-full h-[400px] md:h-full md:min-h-[750px] bg-transparent">
       <Canvas 
         shadows 
-        dpr={[1, 12]} 
+        dpr={[1, 1.5]} 
         gl={{ antialias: true, alpha: true }}
-        camera={{ position: [1, 2.5, 8], fov: 35}}
+        camera={{ 
+          position: isMobile ? [0, 2, 10] : [1, 2.5, 8], 
+          fov: isMobile ? 45 : 35
+        }}
         className="bg-transparent"
       >
         <Environment preset="city" background={false} />
