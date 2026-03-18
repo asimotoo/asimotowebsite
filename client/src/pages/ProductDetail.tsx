@@ -4,7 +4,7 @@ import { useProduct } from "@/hooks/use-products";
 import { useRoute, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Minus, Plus, ShoppingCart, Star, Truck, Shield, RotateCcw, Check, Heart, Share2, ShieldCheck, RefreshCw, ArrowLeft, PlayCircle, Edit, Trash2, X } from "lucide-react";
+import { ChevronRight, Minus, Plus, ShoppingCart, Star, Truck, Shield, RotateCcw, Check, Heart, Share2, ShieldCheck, RefreshCw, ArrowLeft, PlayCircle, Edit, Trash2, X, Maximize } from "lucide-react";
 import { Link } from "wouter";
 import { useCart } from "@/lib/cart-store";
 import { useFavorites } from "@/lib/favorites-store";
@@ -86,6 +86,25 @@ export default function ProductDetail() {
       setActiveMedia(images[0] || product.imageUrl);
     }
   }, [product]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditOpen || !mediaList.length) return;
+      
+      const currentIndex = activeMedia ? mediaList.indexOf(activeMedia) : -1;
+      
+      if (e.key === "ArrowRight") {
+        const nextIndex = (currentIndex + 1) % mediaList.length;
+        setActiveMedia(mediaList[nextIndex]);
+      } else if (e.key === "ArrowLeft") {
+        const prevIndex = (currentIndex - 1 + mediaList.length) % mediaList.length;
+        setActiveMedia(mediaList[prevIndex]);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeMedia, mediaList, isEditOpen]);
 
   const handleAddToCart = () => {
     if (product) {
@@ -497,37 +516,58 @@ export default function ProductDetail() {
         <div className="space-y-4 lg:sticky lg:top-24 self-start">
           <div className="bg-white dark:bg-slate-900 p-2 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 relative aspect-square bg-gray-50 overflow-hidden group">
             {activeMedia && (
-              isVideo(activeMedia) ? (
-                <video 
-                  src={activeMedia} 
-                  controls 
-                  className="w-full h-full object-contain rounded-2xl"
-                />
-              ) : (
-                <Dialog>
-                  <DialogTrigger asChild>
+              <div className="relative w-full h-full group">
+                {isVideo(activeMedia) ? (
+                  <video 
+                    src={activeMedia} 
+                    controls 
+                    className="w-full h-full object-contain rounded-2xl"
+                  />
+                ) : (
+                  <>
                     <img 
                       src={activeMedia} 
                       alt={product.name}
-                      className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 cursor-zoom-in"
+                      className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500"
                     />
-                  </DialogTrigger>
-                  <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      <img 
-                        src={activeMedia} 
-                        alt={product.name}
-                        className="w-full h-full object-contain"
-                      />
+                    
+                    <Dialog>
                       <DialogTrigger asChild>
-                        <button className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
-                          <X className="w-6 h-6" />
+                        <button className="absolute bottom-4 left-4 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 text-gray-900 dark:text-white transition-all shadow-sm border border-gray-200 dark:border-slate-700 font-medium text-sm group/btn">
+                          <Maximize className="w-4 h-4" />
+                          Tam Ekran
                         </button>
                       </DialogTrigger>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )
+                      <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
+                        <div className="relative w-full h-full flex items-center justify-center overflow-auto custom-scrollbar">
+                          <div className="relative min-w-full min-h-full flex items-center justify-center p-4">
+                            <img 
+                              src={activeMedia} 
+                              alt={product.name}
+                              className="max-w-full max-h-full object-contain transition-all duration-300 cursor-zoom-in hover:scale-[1.02]"
+                              onClick={(e) => {
+                                const target = e.currentTarget;
+                                if (target.style.transform === 'scale(2)') {
+                                  target.style.transform = 'scale(1)';
+                                  target.style.cursor = 'zoom-in';
+                                } else {
+                                  target.style.transform = 'scale(2)';
+                                  target.style.cursor = 'zoom-out';
+                                }
+                              }}
+                            />
+                            <DialogTrigger asChild>
+                              <button className="fixed top-4 right-4 z-50 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
+                                <X className="w-6 h-6" />
+                              </button>
+                            </DialogTrigger>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                )}
+              </div>
             )}
             
             <button

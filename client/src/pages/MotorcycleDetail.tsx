@@ -11,8 +11,9 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
-import { MapPin, Calendar, Gauge, Bike, MessageCircle, Phone, Pencil, Trash2, X } from "lucide-react";
+import { MapPin, Calendar, Gauge, Bike, MessageCircle, Phone, Pencil, Trash2, X, Maximize } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
@@ -45,10 +46,26 @@ export default function MotorcycleDetail() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [api, setApi] = useState<CarouselApi>();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditDialogOpen || !api) return;
+      
+      if (e.key === "ArrowRight") {
+        api.scrollNext();
+      } else if (e.key === "ArrowLeft") {
+        api.scrollPrev();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [api, isEditDialogOpen]);
 
   const { data: moto, isLoading } = useQuery<Motorcycle>({
     queryKey: [`/api/motorcycles/${id}`],
@@ -155,35 +172,54 @@ export default function MotorcycleDetail() {
         {/* Left Column: Images */}
         <div className="lg:col-span-2 space-y-4">
           <Card className="border-none shadow-none bg-transparent">
-            <Carousel className="w-full">
+            <Carousel setApi={setApi} className="w-full">
               <CarouselContent>
                 {images.length > 0 ? (
                   images.map((img: string, index: number) => (
                     <CarouselItem key={index}>
                       <div className="aspect-video relative rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <img 
-                              src={img} 
-                              alt={`${moto.brand} ${moto.model} - ${index + 1}`} 
-                              className="object-contain w-full h-full cursor-zoom-in"
-                            />
-                          </DialogTrigger>
-                          <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
-                            <div className="relative w-full h-full flex items-center justify-center">
-                              <img 
-                                src={img} 
-                                alt={`${moto.brand} ${moto.model}`} 
-                                className="w-full h-full object-contain"
-                              />
-                              <DialogTrigger asChild>
-                                <button className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
-                                  <X className="w-6 h-6" />
-                                </button>
-                              </DialogTrigger>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <div className="relative w-full h-full group">
+                          <img 
+                            src={img} 
+                            alt={`${moto.brand} ${moto.model} - ${index + 1}`} 
+                            className="object-contain w-full h-full"
+                          />
+                          
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <button className="absolute bottom-4 left-4 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 text-gray-900 dark:text-white transition-all shadow-sm border border-gray-200 dark:border-slate-700 font-medium text-sm group/btn">
+                                <Maximize className="w-4 h-4" />
+                                Tam Ekran
+                              </button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
+                              <div className="relative w-full h-full flex items-center justify-center overflow-auto custom-scrollbar">
+                                <div className="relative min-w-full min-h-full flex items-center justify-center p-4">
+                                  <img 
+                                    src={img} 
+                                    alt={`${moto.brand} ${moto.model}`} 
+                                    className="max-w-full max-h-full object-contain transition-all duration-300 cursor-zoom-in hover:scale-[1.02]"
+                                    onClick={(e) => {
+                                      const target = e.currentTarget;
+                                      if (target.style.transform === 'scale(2)') {
+                                        target.style.transform = 'scale(1)';
+                                        target.style.cursor = 'zoom-in';
+                                      } else {
+                                        target.style.transform = 'scale(2)';
+                                        target.style.cursor = 'zoom-out';
+                                      }
+                                    }}
+                                  />
+                                  <DialogTrigger asChild>
+                                    <button className="fixed top-4 right-4 z-50 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
+                                      <X className="w-6 h-6" />
+                                    </button>
+                                  </DialogTrigger>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </div>
                     </CarouselItem>
                   ))

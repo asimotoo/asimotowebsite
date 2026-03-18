@@ -25,7 +25,7 @@ function YamahaR1Model({ isMobile }: { isMobile: boolean }) {
       ref={modelRef} 
       object={scene} 
       scale={isMobile ? 3.2 : 2.5} 
-      position={isMobile ? [0, -0.4, 0] : [0, -0.6, 0]} 
+      position={isMobile ? [0, -0.8, 0] : [0, -0.6, 0]} 
       rotation={[0, Math.PI / 1.5, 0]} 
     />
   );
