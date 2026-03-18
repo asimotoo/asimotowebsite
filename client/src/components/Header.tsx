@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Search, User, ShoppingCart, Menu } from "lucide-react";
+import { Search, User, ShoppingCart, Menu, X } from "lucide-react";
 import logo from "../assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

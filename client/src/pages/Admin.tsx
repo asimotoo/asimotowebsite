@@ -20,7 +20,7 @@ import { type Message } from "@shared/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { Check, Mail, Plus, Trash2, MessageSquare, Package, ChevronRight, LogOut, Image, X, Bike, ChevronsUpDown } from "lucide-react";
+import { Check, Mail, Plus, Trash2, MessageSquare, Package, ChevronRight, LogOut, Image as ImageIcon, X, Bike, ChevronsUpDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
