@@ -27,10 +27,12 @@ import Cart from "@/pages/Cart";
 import NewArrivals from "@/pages/NewArrivals";
 import Motorcycles from "@/pages/Motorcycles";
 import MotorcycleDetail from "@/pages/MotorcycleDetail";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 function Router() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 text-black dark:text-gray-100 transition-colors duration-300">
+      <ScrollToTop />
       <TopBar />
       <Header />
       <main className="flex-grow">

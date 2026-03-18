@@ -32,7 +32,9 @@ function YamahaR1Model({ isMobile }: { isMobile: boolean }) {
 }
 
 export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);

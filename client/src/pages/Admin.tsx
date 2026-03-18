@@ -241,6 +241,7 @@ export default function Admin() {
       setSelectedFiles([]);
       setPreviews([]);
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/motorcycles"] });
     },
     onError: (error: Error) => {
       toast({
@@ -304,6 +305,8 @@ export default function Admin() {
       motoForm.reset();
       setSelectedFiles([]);
       setPreviews([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/motorcycles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
     },
     onError: (error: Error) => {
       toast({
@@ -362,6 +365,7 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/motorcycles"] });
       toast({
         title: "Başarılı",
         description: "Ürün başarıyla silindi",
