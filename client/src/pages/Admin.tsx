@@ -136,6 +136,10 @@ export default function Admin() {
     queryKey: ["/api/messages"],
   });
 
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/categories"],
+  });
+
   const form = useForm({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -465,9 +469,15 @@ export default function Admin() {
                         <SelectValue placeholder="Kategori Seçin" />
                       </SelectTrigger>
                       <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-black dark:text-white">
-                        <SelectItem value="1" className="font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-slate-100 dark:focus:bg-slate-800">Yedek Parça</SelectItem>
-                        <SelectItem value="2" className="font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-slate-100 dark:focus:bg-slate-800">Elektronik Ekipman</SelectItem>
-                        <SelectItem value="3" className="font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-slate-100 dark:focus:bg-slate-800">Jant & Lastik</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem 
+                            key={category.id} 
+                            value={category.id.toString()} 
+                            className="font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-slate-100 dark:focus:bg-slate-800"
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                      {form.formState.errors.categoryId && (
