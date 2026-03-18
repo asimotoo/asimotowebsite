@@ -25,7 +25,7 @@ function YamahaR1Model({ isMobile }: { isMobile: boolean }) {
       ref={modelRef} 
       object={scene} 
       scale={isMobile ? 3.2 : 2.5} 
-      position={isMobile ? [0, -0.8, 0] : [0, -0.6, 0]} 
+      position={isMobile ? [0, -2.2, 0] : [0, -0.6, 0]} 
       rotation={[0, Math.PI / 1.5, 0]} 
     />
   );
@@ -48,7 +48,7 @@ export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
         dpr={[1, 2]} 
         gl={{ antialias: true, alpha: true }}
         camera={{ 
-          position: isMobile ? [0, 0.8, 15] : [1, 2.5, 8], 
+          position: isMobile ? [0, 0, 15] : [0, 2, 10], 
           fov: isMobile ? 30 : 35
         }}
         className="bg-transparent"

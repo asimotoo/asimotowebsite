@@ -47,6 +47,7 @@ export default function MotorcycleDetail() {
   const queryClient = useQueryClient();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
+  const [fullscreenApi, setFullscreenApi] = useState<CarouselApi>();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -54,12 +55,15 @@ export default function MotorcycleDetail() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isEditDialogOpen || !api) return;
+      if (isEditDialogOpen) return;
       
+      const targetApi = fullscreenApi || api;
+      if (!targetApi) return;
+
       if (e.key === "ArrowRight") {
-        api.scrollNext();
+        targetApi.scrollNext();
       } else if (e.key === "ArrowLeft") {
-        api.scrollPrev();
+        targetApi.scrollPrev();
       }
     };
 
@@ -184,7 +188,6 @@ export default function MotorcycleDetail() {
                             alt={`${moto.brand} ${moto.model} - ${index + 1}`} 
                             className="object-contain w-full h-full"
                           />
-                          
                           <Dialog>
                             <DialogTrigger asChild>
                               <button className="absolute bottom-4 left-4 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 text-gray-900 dark:text-white transition-all shadow-sm border border-gray-200 dark:border-slate-700 font-medium text-sm group/btn">
@@ -192,9 +195,10 @@ export default function MotorcycleDetail() {
                                 Tam Ekran
                               </button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden bg-black/95">
+                            <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden bg-black/95 [&>button]:text-white [&>button]:bg-red-600 [&>button]:hover:bg-red-700 [&>button]:opacity-100 [&>button]:rounded-full [&>button]:transition-all">
                               <div className="relative w-full h-[90vh] flex items-center justify-center p-4">
                                 <Carousel 
+                                  setApi={setFullscreenApi}
                                   className="w-full h-full"
                                   opts={{
                                     startIndex: index,

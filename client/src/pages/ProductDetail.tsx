@@ -521,7 +521,7 @@ export default function ProductDetail() {
                               Tam Ekran
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden bg-black/95">
+                          <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden bg-black/95 [&>button]:text-white [&>button]:bg-red-600 [&>button]:hover:bg-red-700 [&>button]:opacity-100 [&>button]:rounded-full [&>button]:transition-all">
                             <div className="relative w-full h-[90vh] flex items-center justify-center p-4">
                               <Carousel 
                                 className="w-full h-full"
@@ -634,9 +634,14 @@ export default function ProductDetail() {
           <div className="flex flex-col gap-4 pt-2">
             <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl p-4 text-center">
               <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">Stok ve Fiyat Bilgisi İçin</p>
-              <p className="text-2xl font-black text-[#17BA4C] animate-flash">
+              <a 
+                href="https://wa.me/905526692332" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-2xl font-black text-[#17BA4C] animate-flash hover:underline block"
+              >
                 WHATSAPP: 0552 669 23 32
-              </p>
+              </a>
               <p className="text-sm text-muted-foreground mt-1">Stok Sorunuz</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
