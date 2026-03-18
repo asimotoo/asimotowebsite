@@ -192,30 +192,31 @@ export default function MotorcycleDetail() {
                                 Tam Ekran
                               </button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
-                              <div className="relative w-full h-full flex items-center justify-center overflow-auto custom-scrollbar">
-                                <div className="relative min-w-full min-h-full flex items-center justify-center p-4">
-                                  <img 
-                                    src={img} 
-                                    alt={`${moto.brand} ${moto.model}`} 
-                                    className="max-w-full max-h-full object-contain transition-all duration-300 cursor-zoom-in hover:scale-[1.02]"
-                                    onClick={(e) => {
-                                      const target = e.currentTarget;
-                                      if (target.style.transform === 'scale(2)') {
-                                        target.style.transform = 'scale(1)';
-                                        target.style.cursor = 'zoom-in';
-                                      } else {
-                                        target.style.transform = 'scale(2)';
-                                        target.style.cursor = 'zoom-out';
-                                      }
-                                    }}
-                                  />
-                                  <DialogTrigger asChild>
-                                    <button className="fixed top-4 right-4 z-50 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
-                                      <X className="w-6 h-6" />
-                                    </button>
-                                  </DialogTrigger>
-                                </div>
+                            <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden bg-black/95">
+                              <div className="relative w-full h-[90vh] flex items-center justify-center p-4">
+                                <Carousel 
+                                  className="w-full h-full"
+                                  opts={{
+                                    startIndex: index,
+                                  }}
+                                >
+                                  <CarouselContent>
+                                    {images.map((img: string, idx: number) => (
+                                      <CarouselItem key={idx} className="flex items-center justify-center">
+                                        <img 
+                                          src={img} 
+                                          alt={`${moto.brand} ${moto.model} - ${idx + 1}`}
+                                          className="max-w-full max-h-[85vh] object-contain transition-transform duration-300 pointer-events-none"
+                                        />
+                                      </CarouselItem>
+                                    ))}
+                                  </CarouselContent>
+                                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full text-white/90 text-sm backdrop-blur-sm z-50">
+                                    {index + 1} / {images.length}
+                                  </div>
+                                  <CarouselPrevious className="left-4 bg-white/10 hover:bg-white/20 text-white border-none" />
+                                  <CarouselNext className="right-4 bg-white/10 hover:bg-white/20 text-white border-none" />
+                                </Carousel>
                               </div>
                             </DialogContent>
                           </Dialog>
@@ -371,10 +372,13 @@ export default function MotorcycleDetail() {
                   <p className="text-xs text-muted-foreground mt-1">WhatsApp Üzerinden Ulaşabilirsiniz</p>
                </div>
 
-               <Button className="w-full h-12 text-lg font-bold bg-[#17BA4C] hover:bg-[#14a041] gap-2">
-                 <Phone className="w-5 h-5" />
-                 Hemen Ara
-               </Button>
+
+               <a href="tel:05526692332" className="w-full">
+                 <Button className="w-full h-12 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg shadow-blue-600/20">
+                   <Phone className="w-5 h-5" />
+                   Hemen Ara
+                 </Button>
+               </a>
             </div>
 
           </div>

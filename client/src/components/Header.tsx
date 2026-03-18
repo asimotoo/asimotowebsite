@@ -120,6 +120,35 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
+                
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
+                  {user ? (
+                    <>
+                      {user.role === 'admin' && (
+                        <Link href="/admin">
+                          <Button className="w-full justify-start gap-2 bg-[#17BA4C] hover:bg-[#14a041] text-white font-bold h-12">
+                            <span className="text-xl">⚡</span> Yönetim Paneli
+                          </Button>
+                        </Link>
+                      )}
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start gap-2 text-red-600 border-red-100 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/10 font-bold h-12"
+                        onClick={() => logoutMutation.mutate()}
+                      >
+                        <X className="w-4 h-4" />
+                        Çıkış Yap
+                      </Button>
+                    </>
+                  ) : (
+                    <Link href="/auth">
+                      <Button className="w-full justify-start gap-2 bg-[#17BA4C] hover:bg-[#14a041] text-white font-bold h-12">
+                        <User className="w-4 h-4" />
+                        Giriş Yap
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </nav>
             </SheetContent>
           </Sheet>

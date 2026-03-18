@@ -95,7 +95,7 @@ export default function Home() {
           </div>
 
           <motion.div 
-            className="relative h-[400px] lg:h-[900px] flex items-center justify-center order-first lg:order-last"
+            className="relative h-[400px] lg:h-[900px] flex items-center justify-center order-first lg:order-last translate-y-8 sm:translate-y-0"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1 }}
@@ -180,7 +180,7 @@ export default function Home() {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {categories?.map((category) => (
-              <Link key={category.id} href={`/products?category=${category.slug}`}>
+              <Link key={category.id} href={category.slug === 'motosiklet' ? '/motorcycles' : `/products?category=${category.slug}`}>
                 <div className="group relative aspect-square overflow-hidden rounded-2xl cursor-pointer">
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors z-10" />
                   <img 

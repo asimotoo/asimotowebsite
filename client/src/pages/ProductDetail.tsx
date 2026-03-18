@@ -4,7 +4,7 @@ import { useProduct } from "@/hooks/use-products";
 import { useRoute, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Minus, Plus, ShoppingCart, Star, Truck, Shield, RotateCcw, Check, Heart, Share2, ShieldCheck, RefreshCw, ArrowLeft, PlayCircle, Edit, Trash2, X, Maximize } from "lucide-react";
+import { ChevronRight, Minus, Plus, ShoppingCart, Star, Truck, Shield, RotateCcw, Check, Heart, Share2, ShieldCheck, RefreshCw, ArrowLeft, PlayCircle, Edit, Trash2, X, Maximize, Phone } from "lucide-react";
 import { Link } from "wouter";
 import { useCart } from "@/lib/cart-store";
 import { useFavorites } from "@/lib/favorites-store";
@@ -19,6 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +50,16 @@ export default function ProductDetail() {
   const id = parseInt(params?.id || "0");
   const { data: product, isLoading } = useProduct(id);
 
+  const [activeMedia, setActiveMedia] = useState<string | null>(null);
+  const [mediaList, setMediaList] = useState<string[]>([]);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [currentMediaList, setCurrentMediaList] = useState<string[]>([]);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
   const addToCart = useCart((state) => state.addToCart);
   const { toggleFavorite, isFavorite } = useFavorites();
   const { toast } = useToast();
@@ -60,32 +77,20 @@ export default function ProductDetail() {
     }
   };
 
-  const [activeMedia, setActiveMedia] = useState<string | null>(null);
-  const [mediaList, setMediaList] = useState<string[]>([]);
-
-  useEffect(() => {
+  const handleAddToCart = () => {
     if (product) {
-      let images: string[] = [];
-      try {
-        if (product.images) {
-           images = JSON.parse(product.images);
-        }
-      } catch (e) {
-        console.error("Failed to parse product images", e);
-      }
-      
-      // Fallback to imageUrl if images array is empty
-      if (images.length === 0 && product.imageUrl) {
-        images = [product.imageUrl];
-      } else if (images.length > 0 && product.imageUrl && !images.includes(product.imageUrl)) {
-         // Ensure main imageUrl is included if not present (though our server logic puts it first)
-         // Actually server logic sets imageUrl to images[0] so it should be there.
-      }
-
-      setMediaList(images);
-      setActiveMedia(images[0] || product.imageUrl);
+      addToCart(product);
+      toast({
+        title: "Sepete Eklendi",
+        description: `${product.name} sepetinize eklendi.`,
+      });
     }
-  }, [product]);
+  };
+
+  const isVideo = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg)$/i);
+  };
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -105,28 +110,6 @@ export default function ProductDetail() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeMedia, mediaList, isEditOpen]);
-
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart(product);
-      toast({
-        title: "Sepete Eklendi",
-        description: `${product.name} sepetinize eklendi.`,
-      });
-    }
-  };
-
-  const isVideo = (url: string) => {
-    return url.match(/\.(mp4|webm|ogg)$/i);
-  };
-
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
-  const [currentMediaList, setCurrentMediaList] = useState<string[]>([]);
-  const [isCompressing, setIsCompressing] = useState(false);
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
 
   const form = useForm({
     resolver: zodResolver(productFormSchema),
@@ -516,58 +499,59 @@ export default function ProductDetail() {
         <div className="space-y-4 lg:sticky lg:top-24 self-start">
           <div className="bg-white dark:bg-slate-900 p-2 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 relative aspect-square bg-gray-50 overflow-hidden group">
             {activeMedia && (
-              <div className="relative w-full h-full group">
-                {isVideo(activeMedia) ? (
-                  <video 
-                    src={activeMedia} 
-                    controls 
-                    className="w-full h-full object-contain rounded-2xl"
-                  />
-                ) : (
-                  <>
-                    <img 
-                      src={activeMedia} 
-                      alt={product.name}
-                      className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500"
-                    />
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <button className="absolute bottom-4 left-4 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 text-gray-900 dark:text-white transition-all shadow-sm border border-gray-200 dark:border-slate-700 font-medium text-sm group/btn">
-                          <Maximize className="w-4 h-4" />
-                          Tam Ekran
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
-                        <div className="relative w-full h-full flex items-center justify-center overflow-auto custom-scrollbar">
-                          <div className="relative min-w-full min-h-full flex items-center justify-center p-4">
-                            <img 
-                              src={activeMedia} 
-                              alt={product.name}
-                              className="max-w-full max-h-full object-contain transition-all duration-300 cursor-zoom-in hover:scale-[1.02]"
-                              onClick={(e) => {
-                                const target = e.currentTarget;
-                                if (target.style.transform === 'scale(2)') {
-                                  target.style.transform = 'scale(1)';
-                                  target.style.cursor = 'zoom-in';
-                                } else {
-                                  target.style.transform = 'scale(2)';
-                                  target.style.cursor = 'zoom-out';
-                                }
-                              }}
-                            />
-                            <DialogTrigger asChild>
-                              <button className="fixed top-4 right-4 z-50 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
-                                <X className="w-6 h-6" />
-                              </button>
-                            </DialogTrigger>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </>
-                )}
-              </div>
+                  <div className="relative w-full h-full group">
+                    {isVideo(activeMedia) ? (
+                      <video 
+                        src={activeMedia} 
+                        controls 
+                        className="w-full h-full object-contain rounded-2xl"
+                      />
+                    ) : (
+                      <>
+                        <img 
+                          src={activeMedia} 
+                          alt={product.name}
+                          className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500"
+                        />
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="absolute bottom-2 left-2 bg-black/50 text-white border-white/20 hover:bg-black/70 backdrop-blur-md z-20">
+                              <Maximize className="w-4 h-4 mr-2" />
+                              Tam Ekran
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-[95vw] max-h-[90vh] p-0 overflow-hidden bg-black/95">
+                            <div className="relative w-full h-[90vh] flex items-center justify-center p-4">
+                              <Carousel 
+                                className="w-full h-full"
+                                opts={{
+                                  startIndex: mediaList.indexOf(activeMedia || ""),
+                                }}
+                              >
+                                <CarouselContent>
+                                  {mediaList.map((img, idx) => (
+                                    <CarouselItem key={idx} className="flex items-center justify-center">
+                                      <img 
+                                        src={img} 
+                                        alt={`${product.name} - ${idx + 1}`}
+                                        className="max-w-full max-h-[85vh] object-contain transition-transform duration-300 pointer-events-none"
+                                      />
+                                    </CarouselItem>
+                                  ))}
+                                </CarouselContent>
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full text-white/90 text-sm backdrop-blur-sm z-50">
+                                  {mediaList.indexOf(activeMedia || "") + 1} / {mediaList.length}
+                                </div>
+                                <CarouselPrevious className="left-4 bg-white/10 hover:bg-white/20 text-white border-none" />
+                                <CarouselNext className="right-4 bg-white/10 hover:bg-white/20 text-white border-none" />
+                              </Carousel>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </>
+                    )}
+                  </div>
             )}
             
             <button
@@ -655,15 +639,26 @@ export default function ProductDetail() {
               </p>
               <p className="text-sm text-muted-foreground mt-1">Stok Sorunuz</p>
             </div>
-            <Button 
-              size="lg" 
-              className="w-full h-14 text-lg bg-[#17BA4C] hover:bg-[#14a041] text-white shadow-lg shadow-[#17BA4C]/20 transition-all hover:scale-[1.02]"
-              disabled={(product.stock ?? 0) <= 0}
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              Sepete Ekle
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                size="lg" 
+                className="flex-1 h-14 text-lg bg-[#17BA4C] hover:bg-[#14a041] text-white shadow-lg shadow-[#17BA4C]/20 transition-all hover:scale-[1.02]"
+                disabled={(product.stock ?? 0) <= 0}
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                Sepete Ekle
+              </Button>
+              <a href="tel:05526692332" className="flex-1">
+                <Button 
+                  size="lg" 
+                  className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02]"
+                >
+                  <Phone className="mr-2 h-5 w-5" />
+                  Hemen Ara
+                </Button>
+              </a>
+            </div>
             
             <div className="grid grid-cols-2 gap-4">
               <Button 
