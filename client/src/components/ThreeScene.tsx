@@ -1,45 +1,55 @@
-import { useRef, Suspense } from "react";
+import { useRef, Suspense, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Html, ContactShadows, PresentationControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-function YamahaR1Model() {
+function YamahaR1Model({ isMobile }: { isMobile: boolean }) {
   const { scene } = useGLTF("https://6ndngeh9a2b4fffw.public.blob.vercel-storage.com/2022_yamaha_r1.glb");
   const modelRef = useRef<THREE.Group>(null);
   
   useFrame((state) => {
     if (modelRef.current) {
       const scrollY = window.scrollY;
-      // Initial rotation (approx 45 + 90 + 30 - 15 + 5 degrees) + scroll rotation
       const targetRotation = (Math.PI / 4 + Math.PI / 2 + Math.PI / 6 - Math.PI / 12 + Math.PI / 36) + (scrollY * 0.002);
 
-      
-      // Smooth interpolation (Lerp)
       modelRef.current.rotation.y = THREE.MathUtils.lerp(
         modelRef.current.rotation.y,
         targetRotation,
-        0.1 // Smoothing factor
+        0.1 
       );
     }
   });
   
-  return <primitive ref={modelRef} object={scene} scale={2.5} position={[0, -0.6, 0]} rotation={[0, Math.PI / 1.5, 0]} />;
+  return (
+    <primitive 
+      ref={modelRef} 
+      object={scene} 
+      scale={isMobile ? 3.2 : 2.5} 
+      position={isMobile ? [0, -0.4, 0] : [0, -0.6, 0]} 
+      rotation={[0, Math.PI / 1.5, 0]} 
+    />
+  );
 }
 
 export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
-  return (
-  // Dynamic camera and scale based on screen width
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
-    <div className="w-full h-[400px] md:h-full md:min-h-[750px] bg-transparent">
+    <div className="w-full h-[350px] sm:h-[450px] md:h-full md:min-h-[750px] bg-transparent">
       <Canvas 
         shadows 
-        dpr={[1, 1.5]} 
+        dpr={[1, 2]} 
         gl={{ antialias: true, alpha: true }}
         camera={{ 
-          position: isMobile ? [0, 2, 10] : [1, 2.5, 8], 
-          fov: isMobile ? 45 : 35
+          position: isMobile ? [0, 1.5, 12] : [1, 2.5, 8], 
+          fov: isMobile ? 35 : 35
         }}
         className="bg-transparent"
       >
@@ -66,7 +76,7 @@ export function ThreeScene({ scrollProgress }: { scrollProgress?: any }) {
             zoom={0.7} 
             polar={[-0.1, 0.1]}
           >
-             <YamahaR1Model />
+             <YamahaR1Model isMobile={isMobile} />
              <ContactShadows 
                position={[0, -0.6, 0]} 
                opacity={0.15} 

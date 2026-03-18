@@ -4,7 +4,7 @@ import { useProduct } from "@/hooks/use-products";
 import { useRoute, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Minus, Plus, ShoppingCart, Star, Truck, Shield, RotateCcw, Check, Heart, Share2, ShieldCheck, RefreshCw, ArrowLeft, PlayCircle, Edit, Trash2 } from "lucide-react";
+import { ChevronRight, Minus, Plus, ShoppingCart, Star, Truck, Shield, RotateCcw, Check, Heart, Share2, ShieldCheck, RefreshCw, ArrowLeft, PlayCircle, Edit, Trash2, X } from "lucide-react";
 import { Link } from "wouter";
 import { useCart } from "@/lib/cart-store";
 import { useFavorites } from "@/lib/favorites-store";
@@ -102,6 +102,10 @@ export default function ProductDetail() {
   };
 
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [currentMediaList, setCurrentMediaList] = useState<string[]>([]);
+  const [isCompressing, setIsCompressing] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -122,6 +126,23 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (product) {
+      let images: string[] = [];
+      try {
+        if (product.images) {
+          images = JSON.parse(product.images);
+        }
+      } catch (e) {
+        console.error("Failed to parse product images", e);
+      }
+      
+      if (images.length === 0 && product.imageUrl) {
+        images = [product.imageUrl];
+      }
+
+      setMediaList(images);
+      setActiveMedia(images[0] || product.imageUrl);
+      setCurrentMediaList(images);
+
       form.reset({
         name: product.name,
         description: product.description || "",
@@ -135,6 +156,54 @@ export default function ProductDetail() {
       });
     }
   }, [product, form]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+      
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPreviews(prev => [...prev, ...newPreviews]);
+    }
+    e.target.value = '';
+  };
+
+  const removeNewFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(previews[index]);
+    setPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingMedia = (index: number) => {
+    setCurrentMediaList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const compressImage = async (file: File): Promise<File | Blob> => {
+    if (!file.type.startsWith("image/")) return file;
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1600;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_WIDTH) {
+            height = (height * MAX_WIDTH) / width;
+            width = MAX_WIDTH;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => resolve(blob ? new File([blob], file.name, { type: "image/jpeg" }) : file), "image/jpeg", 0.85);
+        };
+      };
+    });
+  };
 
   const deleteProductMutation = useMutation({
     mutationFn: async () => {
@@ -172,8 +241,23 @@ export default function ProductDetail() {
       if (data.year) formData.append("year", data.year.toString());
       formData.append("isFeatured", data.isFeatured.toString());
       
-      // Handle file uploads if any (not implemented in this quick edit, but supported by backend)
-      // For now we just update text fields. To update images, we'd need a file input in the edit dialog.
+      // Handle existing images to keep
+      formData.append("existingImages", JSON.stringify(currentMediaList));
+      
+      // Handle new file uploads
+      if (selectedFiles.length > 0) {
+        setIsCompressing(true);
+        try {
+          const compressedFiles = await Promise.all(
+            selectedFiles.map(file => compressImage(file))
+          );
+          compressedFiles.forEach((file) => {
+            formData.append("images", file);
+          });
+        } finally {
+          setIsCompressing(false);
+        }
+      }
 
       const res = await fetch(`/api/products/${id}`, {
         method: "PUT",
@@ -193,6 +277,8 @@ export default function ProductDetail() {
         description: "Ürün başarıyla güncellendi",
       });
       setIsEditOpen(false);
+      setSelectedFiles([]);
+      setPreviews([]);
       queryClient.invalidateQueries({ queryKey: [`/api/products/${id}`] });
     },
     onError: (error: Error) => {
@@ -278,14 +364,22 @@ export default function ProductDetail() {
 
                    <div className="space-y-2">
                     <Label htmlFor="category" className="text-black dark:text-gray-200">Kategori</Label>
-                    <Select onValueChange={(val) => form.setValue("categoryId", val)} defaultValue={form.getValues("categoryId") || product.categoryId?.toString()}>
+                    <Select onValueChange={(val) => form.setValue("categoryId", val)} defaultValue={form.getValues("categoryId")}>
                       <SelectTrigger className="bg-white dark:bg-slate-900 text-black dark:text-white border-slate-200 dark:border-slate-700">
                         <SelectValue placeholder="Kategori Seçin" />
                       </SelectTrigger>
                       <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-black dark:text-white">
-                        <SelectItem value="1">Yedek Parça</SelectItem>
-                        <SelectItem value="2">Elektronik Ekipman</SelectItem>
-                        <SelectItem value="3">Jant & Lastik</SelectItem>
+                        {queryClient.getQueryData<any[]>(["/api/categories"])?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                        ))}
+                        {!queryClient.getQueryData(["/api/categories"]) && (
+                          <>
+                            <SelectItem value="1">Yedek Parça</SelectItem>
+                            <SelectItem value="2">Elektronik Ekipman</SelectItem>
+                            <SelectItem value="3">Jant & Lastik</SelectItem>
+                            <SelectItem value="4">Motosiklet</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -306,8 +400,65 @@ export default function ProductDetail() {
                        <Input id="year" type="number" {...form.register("year")} className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-black dark:text-white" />
                     </div>
 
-                  <Button type="submit" className="w-full" disabled={updateProductMutation.isPending}>
-                    {updateProductMutation.isPending ? "Güncelleniyor..." : "Güncelle"}
+                  <div className="space-y-4">
+                    <Label className="text-black dark:text-gray-200">Görsel Yönetimi</Label>
+                    
+                    {/* Existing Images */}
+                    {currentMediaList.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">Mevcut Görseller</p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {currentMediaList.map((url, idx) => (
+                            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800">
+                              <img src={url} alt="" className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => removeExistingMedia(idx)}
+                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-lg"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* New Files */}
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Yeni Görsel/Video Ekle</p>
+                      <Input 
+                        type="file" 
+                        multiple 
+                        accept="image/*,video/*" 
+                        onChange={handleFileSelect}
+                        className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-black dark:text-white"
+                      />
+                      {previews.length > 0 && (
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          {previews.map((url, idx) => (
+                            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800">
+                              {selectedFiles[idx]?.type.startsWith("image/") ? (
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs p-1 text-center">Video</div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removeNewFile(idx)}
+                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-lg"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={updateProductMutation.isPending || isCompressing}>
+                    {isCompressing ? "Görseller Hazırlanıyor..." : updateProductMutation.isPending ? "Güncelleniyor..." : "Ürünü Güncelle"}
                   </Button>
                 </form>
               </DialogContent>
@@ -343,7 +494,7 @@ export default function ProductDetail() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-12 items-start">
-        <div className="space-y-4 sticky top-24 self-start">
+        <div className="space-y-4 lg:sticky lg:top-24 self-start">
           <div className="bg-white dark:bg-slate-900 p-2 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 relative aspect-square bg-gray-50 overflow-hidden group">
             {activeMedia && (
               isVideo(activeMedia) ? (
@@ -353,11 +504,29 @@ export default function ProductDetail() {
                   className="w-full h-full object-contain rounded-2xl"
                 />
               ) : (
-                <img 
-                  src={activeMedia} 
-                  alt={product.name}
-                  className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500"
-                />
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <img 
+                      src={activeMedia} 
+                      alt={product.name}
+                      className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 cursor-zoom-in"
+                    />
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <img 
+                        src={activeMedia} 
+                        alt={product.name}
+                        className="w-full h-full object-contain"
+                      />
+                      <DialogTrigger asChild>
+                        <button className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
+                          <X className="w-6 h-6" />
+                        </button>
+                      </DialogTrigger>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )
             )}
             

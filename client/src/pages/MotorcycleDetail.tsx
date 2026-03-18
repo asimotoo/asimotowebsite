@@ -12,7 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { MapPin, Calendar, Gauge, Bike, MessageCircle, Phone, Pencil, Trash2 } from "lucide-react";
+import { MapPin, Calendar, Gauge, Bike, MessageCircle, Phone, Pencil, Trash2, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MotorcycleForm, type MotorcycleFormValues } from "@/components/MotorcycleForm";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function MotorcycleDetail() {
   const [, params] = useRoute("/motorcycles/:id");
@@ -45,6 +45,10 @@ export default function MotorcycleDetail() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   const { data: moto, isLoading } = useQuery<Motorcycle>({
     queryKey: [`/api/motorcycles/${id}`],
@@ -157,11 +161,29 @@ export default function MotorcycleDetail() {
                   images.map((img: string, index: number) => (
                     <CarouselItem key={index}>
                       <div className="aspect-video relative rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800">
-                        <img 
-                          src={img} 
-                          alt={`${moto.brand} ${moto.model} - ${index + 1}`} 
-                          className="object-contain w-full h-full"
-                        />
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <img 
+                              src={img} 
+                              alt={`${moto.brand} ${moto.model} - ${index + 1}`} 
+                              className="object-contain w-full h-full cursor-zoom-in"
+                            />
+                          </DialogTrigger>
+                          <DialogContent className="max-w-[100vw] sm:max-w-[95vw] max-h-[100vh] sm:max-h-[95vh] p-0 bg-black/95 border-none flex items-center justify-center overflow-hidden">
+                            <div className="relative w-full h-full flex items-center justify-center">
+                              <img 
+                                src={img} 
+                                alt={`${moto.brand} ${moto.model}`} 
+                                className="w-full h-full object-contain"
+                              />
+                              <DialogTrigger asChild>
+                                <button className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors">
+                                  <X className="w-6 h-6" />
+                                </button>
+                              </DialogTrigger>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </CarouselItem>
                   ))
@@ -195,7 +217,7 @@ export default function MotorcycleDetail() {
 
         {/* Right Column: Info & Contact */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 space-y-6 sticky top-24">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 space-y-6 lg:sticky lg:top-24">
             
             {/* Admin Controls */}
             {isAdmin && (

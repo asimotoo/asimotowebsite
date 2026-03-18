@@ -1,4 +1,3 @@
-
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ShieldCheck, Truck, Bike, MonitorCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,11 +55,9 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               >
-              <h1 className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-none mb-6 tracking-tighter text-black dark:text-white drop-shadow-sm text-center md:text-left">
-                TÜRKİYE'NİN <br />
-                <span className="text-black dark:text-white">
-                  EN BÜYÜK
-                </span> <br />
+              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black leading-[1.1] mb-6 tracking-tighter text-black dark:text-white drop-shadow-sm text-center md:text-left">
+                TÜRKİYE'NİN <br className="hidden md:block" />
+                EN BÜYÜK <br className="hidden md:block" />
                 YEDEK PARÇA TEDARİKÇİSİ
               </h1>
               <p className="text-lg md:text-2xl text-gray-700 dark:text-gray-300 max-w-lg leading-relaxed mb-10 mx-auto md:mx-0 font-medium text-center md:text-left">

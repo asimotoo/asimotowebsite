@@ -327,14 +327,35 @@ export async function registerRoutes(
        };
 
        // Handle images update logic
-       if (imageUrls) {
+       if (req.body.existingImages) {
+           let existing: string[] = [];
+           try {
+               const parsed = JSON.parse(req.body.existingImages as string);
+               if (Array.isArray(parsed)) {
+                   existing = parsed;
+               } else {
+                   existing = [parsed];
+               }
+           } catch (e) {
+               const val = req.body.existingImages as string;
+               existing = [val];
+           }
+           
+           if (imageUrls) {
+               // Append new images to existing ones
+               const combined = [...existing, ...imageUrls];
+               inputData.images = JSON.stringify(combined);
+               inputData.imageUrl = combined[0];
+           } else {
+               // Just keep existing
+               inputData.images = JSON.stringify(existing);
+               inputData.imageUrl = existing[0];
+           }
+       } else if (imageUrls) {
+          // If no existing images specified but new ones uploaded, replace
           inputData.images = JSON.stringify(imageUrls);
           inputData.imageUrl = primaryImageUrl;
        }
-       
-       // If existing images are sent as string (e.g. kept from frontend), we might need to handle them.
-       // For now, let's assume if new files are uploaded, they replace the old ones or strict append logic is handled by frontend sending existing + new? 
-       // Simplest for now: if new files, replace. If no new files, keep existing (undefined in update) unless explicitly cleared (not handled here yet).
 
        const updatedProduct = await storage.updateProduct(id, inputData);
        if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
@@ -562,13 +583,19 @@ async function seedDatabase() {
     console.log("[seed] Session table verified.");
 
     // Seed Categories
-    const categories = await storage.getCategories();
-    if (categories.length === 0) {
-      console.log("[seed] Seeding categories...");
-      await storage.createCategory({ name: "Yedek Parça", slug: "yedek-parca", imageUrl: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop" });
-      await storage.createCategory({ name: "Elektronik Ekipman", slug: "elektronik-ekipman", imageUrl: "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=500&auto=format&fit=crop" });
-      await storage.createCategory({ name: "Jant & Lastik", slug: "jant-lastik", imageUrl: "https://images.unsplash.com/photo-1589756823695-278bc923f962?w=500&auto=format&fit=crop" });
-      console.log("[seed] Categories seeded successfully.");
+    const defaultCategories = [
+      { name: "Yedek Parça", slug: "yedek-parca", imageUrl: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop" },
+      { name: "Elektronik Ekipman", slug: "elektronik-ekipman", imageUrl: "https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=500&auto=format&fit=crop" },
+      { name: "Jant & Lastik", slug: "jant-lastik", imageUrl: "https://images.unsplash.com/photo-1589756823695-278bc923f962?w=500&auto=format&fit=crop" },
+      { name: "Motosiklet", slug: "motosiklet", imageUrl: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop" }
+    ];
+
+    const currentCategories = await storage.getCategories();
+    for (const cat of defaultCategories) {
+      if (!currentCategories.find(c => c.slug === cat.slug)) {
+        console.log(`[seed] Adding missing category: ${cat.name}`);
+        await storage.createCategory(cat);
+      }
     }
 
     // Seed Admin User

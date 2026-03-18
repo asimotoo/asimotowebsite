@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Check, ChevronsUpDown, Trash2, X } from "lucide-react";
 
 // Comprehensive list of motorcycle brands (sorted)
 const brands = [
@@ -269,44 +269,61 @@ export function MotorcycleForm({ defaultValues, onSubmit, isSubmitting, submitLa
           )}
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-black dark:text-gray-200">Görseller</Label>
+      <div className="space-y-4">
+        <Label className="text-black dark:text-gray-200 font-bold">Görsel Yönetimi</Label>
         
         {/* Existing Images */}
         {existingImages.length > 0 && (
-            <div className="flex gap-2 mb-2 overflow-x-auto p-2">
-                {existingImages.map((img, i) => (
-                    <div key={i} className="relative group shrink-0">
-                        <img src={img} alt={`Existing ${i}`} className="w-20 h-20 object-cover rounded-md border border-gray-200" />
-                        <button type="button" onClick={() => removeExistingImage(img)} className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Trash2 className="w-3 h-3" />
-                        </button>
-                    </div>
-                ))}
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Mevcut Görseller</p>
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+              {existingImages.map((img, i) => (
+                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800">
+                  <img src={img} alt={`Existing ${i}`} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                    <button 
+                      type="button" 
+                      onClick={() => removeExistingImage(img)} 
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600 z-10"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                </div>
+              ))}
             </div>
+          </div>
         )}
 
-        <Input 
-          type="file" 
-          multiple
-          accept="image/*" 
-          onChange={handleFileSelect}
-          className="bg-white dark:bg-slate-900 text-black dark:text-white"
-        />
+        {/* File Input */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Yeni Görsel Ekle</p>
+          <Input 
+            type="file" 
+            multiple
+            accept="image/*" 
+            onChange={handleFileSelect}
+            className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-black dark:text-white file:bg-gray-100 dark:file:bg-slate-800 file:text-black dark:file:text-white"
+          />
+        </div>
+
+        {/* New Previews */}
         {selectedFiles.length > 0 && (
-           <div className="text-sm text-muted-foreground mt-2">
-              {selectedFiles.length} yeni dosya seçildi
-              <ul className="list-disc list-inside mt-1 text-xs text-muted-foreground">
-                  {selectedFiles.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                        {f.name}
-                        <button type="button" onClick={() => removeFile(i)} className="text-red-500 hover:text-red-700">
-                           <Trash2 className="w-3 h-3" /> 
-                        </button>
-                    </li>
-                  ))}
-              </ul>
-           </div>
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Yeni Yüklenenler</p>
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+              {selectedFiles.map((file, i) => (
+                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800">
+                  <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                  <button 
+                    type="button" 
+                    onClick={() => removeFile(i)} 
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 z-10"
+                  >
+                    <X className="w-3 h-3" /> 
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
